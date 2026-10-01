@@ -9,9 +9,7 @@ public class PlayerController : BaseCharacterController
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;
 
-    [Header("Interaction")]
-    [SerializeField] private LayerMask layerMask;
-
+    private Vector2 moveInput;
     private bool isSprint;
 
     public bool IsSprint => isSprint;
@@ -25,42 +23,33 @@ public class PlayerController : BaseCharacterController
             Camera mainCamera = Camera.main;
 
             if (mainCamera != null)
+            {
                 cameraTransform = mainCamera.transform;
+            }
         }
     }
 
     protected override void Update()
     {
+        base.Update();
+
         HandleMovement();
-        HandleGravity();
     }
 
+    /// <summary>
+    /// 플레이어 입력을 기반으로 이동한다.
+    /// </summary>
     private void HandleMovement()
     {
         Vector3 direction = GetMoveDirection();
 
-        if (direction.sqrMagnitude > 0.01f)
-        {
-            Rotate(direction);
-        }
+        if (direction.sqrMagnitude <= 0.01f)
+            return;
 
         float currentSpeed =
             isSprint ? sprintSpeed : moveSpeed;
 
-        direction *= currentSpeed;
-        direction.y = gravityVelocity;
-
-        controller.Move(direction * Time.deltaTime);
-    }
-
-    private void HandleGravity()
-    {
-        if (controller.isGrounded && gravityVelocity < 0f)
-        {
-            ResetGravity();
-        }
-
-        gravityVelocity += gravity * Time.deltaTime;
+        Move(direction, currentSpeed);
     }
 
     /// <summary>
@@ -86,13 +75,17 @@ public class PlayerController : BaseCharacterController
         return Vector3.ClampMagnitude(direction, 1f);
     }
 
+    /// <summary>
+    /// 이동 입력을 받는다.
+    /// </summary>
     public void OnMove(InputAction.CallbackContext context)
     {
-        SetMoveInput(
-            context.ReadValue<Vector2>()
-        );
+        moveInput = context.ReadValue<Vector2>();
     }
 
+    /// <summary>
+    /// 점프 입력을 받는다.
+    /// </summary>
     public void OnJump(InputAction.CallbackContext context)
     {
         if (!context.performed)
@@ -101,6 +94,9 @@ public class PlayerController : BaseCharacterController
         Jump();
     }
 
+    /// <summary>
+    /// 달리기 입력을 받는다.
+    /// </summary>
     public void OnSprint(InputAction.CallbackContext context)
     {
         if (context.performed)
@@ -111,20 +107,5 @@ public class PlayerController : BaseCharacterController
         {
             isSprint = false;
         }
-    }
-
-    protected override void OnControllerColliderHit(ControllerColliderHit hit)
-    {
-        base.OnControllerColliderHit(hit);
-
-        Rigidbody rb = hit.rigidbody;
-
-        if (rb == null)
-            return;
-
-        Vector3 direction = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
-
-        // 필요하면 밀기 기능 활성화
-        // rb.AddForce(direction * 5f, ForceMode.Impulse);
     }
 }
