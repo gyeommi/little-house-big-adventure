@@ -713,7 +713,7 @@ GameObject:
   - component: {fileID: 862404617}
   - component: {fileID: 862404616}
   m_Layer: 0
-  m_Name: Plane
+  m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -828,7 +828,7 @@ GameObject:
   - component: {fileID: 983352773}
   - component: {fileID: 983352772}
   m_Layer: 3
-  m_Name: Sphere
+  m_Name: PushPullSphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1110,7 +1110,7 @@ GameObject:
   - component: {fileID: 1082122354}
   - component: {fileID: 1082122353}
   m_Layer: 8
-  m_Name: Enemy2
+  m_Name: RangedEnemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1306,7 +1306,7 @@ GameObject:
   - component: {fileID: 1293569679}
   - component: {fileID: 1293569683}
   m_Layer: 8
-  m_Name: Enemy1
+  m_Name: MeleeEnemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1886,7 +1886,7 @@ GameObject:
   - component: {fileID: 2127530676}
   - component: {fileID: 2127530680}
   m_Layer: 3
-  m_Name: Door
+  m_Name: InteractableDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
