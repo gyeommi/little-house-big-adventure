@@ -47,9 +47,6 @@ public class PlayerController : BaseCharacterController
     {
         Vector3 direction = GetMoveDirection();
 
-        if (direction.sqrMagnitude <= 0.01f)
-            return;
-
         float currentSpeed =
             isSprint ? sprintSpeed : moveSpeed;
 
