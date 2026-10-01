@@ -27,6 +27,10 @@ public class PlayerController : BaseCharacterController
                 cameraTransform = mainCamera.transform;
             }
         }
+
+        // 마우스를 화면 중앙에 고정시키고 커서를 숨김
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     protected override void Update()

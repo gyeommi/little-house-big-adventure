@@ -1,28 +1,39 @@
 using UnityEngine;
 
-public class EnemyCombat : BaseCharacterCombat
+public abstract class EnemyCombat : BaseCharacterCombat
 {
     [Header("Attack")]
-    [SerializeField] private float attackRange = 2f;
+    [SerializeField] protected float attackRange = 2f;
 
-    private EnemyController enemyController;
+    protected EnemyController enemyController;
 
-    private void Awake()
+    public bool IsInAttackRange
+    {
+        get
+        {
+            if (enemyController == null ||
+                enemyController.Target == null)
+            {
+                return false;
+            }
+
+            return Vector3.Distance(
+                transform.position,
+                enemyController.Target.position
+            ) <= attackRange;
+        }
+    }
+
+    public float AttackRange => attackRange;
+
+    protected virtual void Awake()
     {
         enemyController = GetComponent<EnemyController>();
     }
 
-    private void Update()
+    protected virtual void Update()
     {
-        if (enemyController.Target == null)
-            return;
-
-        float distance = Vector3.Distance(
-            transform.position,
-            enemyController.Target.position
-        );
-
-        if (distance > attackRange)
+        if (!IsInAttackRange)
             return;
 
         Attack();
@@ -35,26 +46,12 @@ public class EnemyCombat : BaseCharacterCombat
         if (target == null)
             return;
 
-        float distance = Vector3.Distance(
-            transform.position,
-            target.position
-        );
-
-        if (distance > attackRange)
-            return;
-
-        BaseCharacterHealth health =
-            target.GetComponent<BaseCharacterHealth>();
-
-        if (health == null)
-            return;
-
-        health.TakeDamage(AttackDamage);
-
-        Debug.Log($"{target.name}에게 {AttackDamage} 데미지!");
+        PerformAttack(target);
     }
 
-    private void OnDrawGizmosSelected()
+    protected abstract void PerformAttack(Transform target);
+
+    protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.DrawWireSphere(
             transform.position,

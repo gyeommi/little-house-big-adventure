@@ -4,12 +4,19 @@ public class EnemyController : BaseCharacterController
 {
     [Header("Detection")]
     [SerializeField] private float detectionRange = 10f;
-    [SerializeField] private float attackRange = 2f;
     [SerializeField] private LayerMask playerLayer;
 
     private Transform target;
+    private EnemyCombat combat;
 
     public Transform Target => target;
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        combat = GetComponent<EnemyCombat>();
+    }
 
     protected override void UpdateCharacter()
     {
@@ -63,14 +70,12 @@ public class EnemyController : BaseCharacterController
 
     private void MoveToTarget()
     {
+        // 공격 범위 안에 들어오면 이동하지 않음
+        if (combat != null && combat.IsInAttackRange)
+            return;
+
         Vector3 direction = target.position - transform.position;
         direction.y = 0f;
-
-        float distance = direction.magnitude;
-
-        // 공격 범위 안에 들어오면 이동하지 않음
-        if (distance <= attackRange)
-            return;
 
         if (direction.sqrMagnitude <= 0.01f)
             return;
@@ -80,16 +85,9 @@ public class EnemyController : BaseCharacterController
 
     private void OnDrawGizmosSelected()
     {
-        // 탐지 범위
         Gizmos.DrawWireSphere(
             transform.position,
             detectionRange
-        );
-
-        // 공격 범위
-        Gizmos.DrawWireSphere(
-            transform.position,
-            attackRange
         );
     }
 }

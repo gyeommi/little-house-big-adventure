@@ -4,9 +4,13 @@ using UnityEngine.InputSystem;
 public class PlayerCombat : BaseCharacterCombat
 {
     [Header("Attack")]
+    [SerializeField] private Transform firePoint;
     [SerializeField] private float attackRange = 10f;
     [SerializeField] private float attackRadius = 0.3f;
     [SerializeField] private LayerMask enemyLayer;
+
+    [Header("Camera")]
+    [SerializeField] private Transform cameraTransform;
 
     public void OnAttack(InputAction.CallbackContext context)
     {
@@ -18,12 +22,29 @@ public class PlayerCombat : BaseCharacterCombat
 
     protected override void PerformAttack()
     {
+        if (cameraTransform == null)
+            return;
+
         Vector3 origin = transform.position;
-        Vector3 direction = transform.forward;
 
-        Debug.DrawRay(origin, direction * attackRange, Color.red, 1f);
+        // 카메라의 좌우 회전만 적용
+        Vector3 direction = cameraTransform.forward;
+        direction.y = 0f;
+        direction.Normalize();
 
-        if (!Physics.SphereCast(origin, attackRadius, direction, out RaycastHit hit, attackRange, enemyLayer))
+        Debug.DrawRay(
+            firePoint.position,
+            direction * attackRange,
+            Color.red,
+            1f
+        );
+        if (!Physics.SphereCast(
+                firePoint.position,
+                attackRadius,
+                direction,
+                out RaycastHit hit,
+                attackRange,
+                enemyLayer))
         {
             Debug.Log("공격 대상 없음");
             return;
@@ -45,6 +66,16 @@ public class PlayerCombat : BaseCharacterCombat
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.DrawWireSphere(transform.position + transform.forward * attackRange, attackRadius);
+        if (cameraTransform == null)
+            return;
+
+        Vector3 direction = cameraTransform.forward;
+        direction.y = 0f;
+        direction.Normalize();
+
+        Gizmos.DrawWireSphere(
+            firePoint.position + direction * attackRange,
+            attackRadius
+        );
     }
 }
