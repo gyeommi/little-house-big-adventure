@@ -88,7 +88,7 @@ public abstract class BaseCharacterController : MonoBehaviour
     }
 
     /// <summary>
-    /// 점프한다.
+    /// 기본 점프력으로 점프한다.
     /// </summary>
     protected virtual void Jump()
     {
@@ -96,6 +96,17 @@ public abstract class BaseCharacterController : MonoBehaviour
             return;
 
         gravityVelocity = jumpPower;
+    }
+
+    /// <summary>
+    /// 지정한 점프력으로 점프한다.
+    /// </summary>
+    public virtual void Jump(float power)
+    {
+        if (!IsGrounded)
+            return;
+
+        gravityVelocity = power;
     }
 
     /// <summary>

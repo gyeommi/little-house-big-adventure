@@ -4,10 +4,15 @@ using UnityEngine.InputSystem;
 public class PlayerController : BaseCharacterController
 {
     [Header("Player Movement")]
+    [SerializeField] private float playerJumpPower = 7f;
     [SerializeField] private float sprintSpeed = 8f;
 
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;
+
+    [Header("Camera Look")]
+    [SerializeField] private Unity.Cinemachine.CinemachineInputAxisController inputAxisController;
+    private bool isLookOrbitYEnabled;
 
     private Vector2 moveInput;
     private bool isSprint;
@@ -92,7 +97,7 @@ public class PlayerController : BaseCharacterController
         if (!context.performed)
             return;
 
-        Jump();
+        Jump(playerJumpPower);
     }
 
     /// <summary>
@@ -108,5 +113,44 @@ public class PlayerController : BaseCharacterController
         {
             isSprint = false;
         }
+    }
+
+    /// <summary>
+    /// 마우스 우클릭으로 Look Orbit Y를 켜고 끈다.
+    /// </summary>
+    public void OnLookToggle(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+            return;
+
+        isLookOrbitYEnabled = !isLookOrbitYEnabled;
+
+        SetLookOrbitY(isLookOrbitYEnabled);
+    }
+
+    private void SetLookOrbitY(bool enabled)
+    {
+        if (inputAxisController == null)
+            return;
+
+        foreach (var controller in inputAxisController.Controllers)
+        {
+            if (controller.Name == "Look Orbit Y")
+            {
+                controller.Enabled = enabled;
+                break;
+            }
+        }
+    }
+
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        JumpPad jumpPad = hit.collider.GetComponent<JumpPad>();
+
+        if (jumpPad == null)
+            return;
+
+        jumpPad.Activate(this);
     }
 }
