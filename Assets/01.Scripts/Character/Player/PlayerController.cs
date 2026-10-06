@@ -4,8 +4,8 @@ using UnityEngine.InputSystem;
 public class PlayerController : BaseCharacterController
 {
     [Header("Player Movement")]
-    [SerializeField] private float playerJumpPower = 7f;
-    [SerializeField] private float sprintSpeed = 8f;
+    [SerializeField] private float playerJumpPower = 15f;
+    [SerializeField] private float sprintSpeed = 30f;
 
     [Header("Camera")]
     [SerializeField] private Transform cameraTransform;

@@ -4,12 +4,12 @@ using UnityEngine;
 public abstract class BaseCharacterController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] protected float moveSpeed = 5f;
+    [SerializeField] protected float moveSpeed = 15f;
     [SerializeField] protected float rotateSpeed = 10f;
 
     [Header("Jump")]
     [SerializeField] protected float gravity = -9.8f;
-    [SerializeField] protected float jumpPower = 5f;
+    [SerializeField] protected float jumpPower = 15f;
 
     protected CharacterController controller;
     protected float gravityVelocity;
