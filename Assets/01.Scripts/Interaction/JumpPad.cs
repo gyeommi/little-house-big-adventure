@@ -6,6 +6,11 @@ public class JumpPad : MonoBehaviour
 
     public void Activate(PlayerController player)
     {
-        player.Jump(jumpPower);
+        PlayerStateMachine stateMachine = player.GetComponent<PlayerStateMachine>();
+
+        if (stateMachine == null)
+            return;
+
+        stateMachine.ForceJump(jumpPower);
     }
 }

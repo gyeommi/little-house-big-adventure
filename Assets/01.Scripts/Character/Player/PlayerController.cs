@@ -1,10 +1,10 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerController : BaseCharacterController
 {
     [Header("Player Movement")]
-    [SerializeField] private float playerJumpPower = 15f;
     [SerializeField] private float sprintSpeed = 30f;
 
     [Header("Camera")]
@@ -12,12 +12,18 @@ public class PlayerController : BaseCharacterController
 
     [Header("Camera Look")]
     [SerializeField] private Unity.Cinemachine.CinemachineInputAxisController inputAxisController;
+
     private bool isLookOrbitYEnabled;
 
     private Vector2 moveInput;
     private bool isSprint;
 
+    public Vector2 MoveInput => moveInput;
     public bool IsSprint => isSprint;
+    public bool HasMoveInput => moveInput.sqrMagnitude > 0.01f;
+    public bool IsGrounded => controller.isGrounded;
+
+    public event Action OnJumpInput;
 
     protected override void Awake()
     {
@@ -38,30 +44,10 @@ public class PlayerController : BaseCharacterController
         Cursor.visible = false;
     }
 
-    protected override void Update()
-    {
-        base.Update();
-
-        HandleMovement();
-    }
-
-    /// <summary>
-    /// 플레이어 입력을 기반으로 이동한다.
-    /// </summary>
-    private void HandleMovement()
-    {
-        Vector3 direction = GetMoveDirection();
-
-        float currentSpeed =
-            isSprint ? sprintSpeed : moveSpeed;
-
-        Move(direction, currentSpeed);
-    }
-
     /// <summary>
     /// 카메라 방향을 기준으로 이동 방향을 계산한다.
     /// </summary>
-    private Vector3 GetMoveDirection()
+    public Vector3 GetMoveDirection()
     {
         if (cameraTransform == null)
             return Vector3.zero;
@@ -82,6 +68,29 @@ public class PlayerController : BaseCharacterController
     }
 
     /// <summary>
+    /// 플레이어를 이동시킨다.
+    /// </summary>
+    public void MovePlayer(float speed)
+    {
+        Vector3 direction = GetMoveDirection();
+
+        Move(direction, speed);
+    }
+
+    /// <summary>
+    /// 플레이어를 점프시킨다.
+    /// </summary>
+    public void JumpPlayer()
+    {
+        Jump();
+    }
+
+    public void JumpPlayer(float jumpPower)
+    {
+        Jump(jumpPower);
+    }
+
+    /// <summary>
     /// 이동 입력을 받는다.
     /// </summary>
     public void OnMove(InputAction.CallbackContext context)
@@ -97,7 +106,7 @@ public class PlayerController : BaseCharacterController
         if (!context.performed)
             return;
 
-        Jump(playerJumpPower);
+        OnJumpInput?.Invoke();
     }
 
     /// <summary>
@@ -113,6 +122,14 @@ public class PlayerController : BaseCharacterController
         {
             isSprint = false;
         }
+    }
+
+    /// <summary>
+    /// 달리기 속도를 반환한다.
+    /// </summary>
+    public float GetSprintSpeed()
+    {
+        return sprintSpeed;
     }
 
     /// <summary>
@@ -142,7 +159,6 @@ public class PlayerController : BaseCharacterController
             }
         }
     }
-
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
