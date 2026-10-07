@@ -6,11 +6,22 @@ public class PlayerJumpState : BaseState
     private PlayerAnimator playerAnimator;
 
     private bool hasLeftGround;
+    private float? jumpPower;
 
+    // 일반 점프
     public PlayerJumpState(PlayerController controller, StateMachine stateMachine) : base(controller, stateMachine)
     {
         player = controller;
         playerAnimator = controller.GetComponent<PlayerAnimator>();
+        jumpPower = null;
+    }
+
+    // 특정 점프 힘을 사용하는 점프
+    public PlayerJumpState(PlayerController controller, StateMachine stateMachine, float jumpPower) : base(controller, stateMachine)
+    {
+        player = controller;
+        playerAnimator = controller.GetComponent<PlayerAnimator>();
+        this.jumpPower = jumpPower;
     }
 
     public override void Enter()
@@ -19,7 +30,16 @@ public class PlayerJumpState : BaseState
 
         hasLeftGround = false;
 
-        player.JumpPlayer();
+        // JumpPad의 점프 힘이 있으면 해당 값을 사용
+        if (jumpPower.HasValue)
+        {
+            player.JumpPlayer(jumpPower.Value);
+        }
+        else
+        {
+            // 일반 점프는 Player의 기본 점프 힘 사용
+            player.JumpPlayer();
+        }
 
         playerAnimator.PlayJump();
     }
@@ -30,13 +50,11 @@ public class PlayerJumpState : BaseState
 
     public override void Update()
     {
-        // 먼저 실제로 공중에 떠났는지 확인
         if (!player.IsGrounded)
         {
             hasLeftGround = true;
         }
 
-        // 공중에 올라갔다가 다시 착지했을 때만 상태 변경
         if (hasLeftGround && player.IsGrounded)
         {
             if (!player.HasMoveInput)

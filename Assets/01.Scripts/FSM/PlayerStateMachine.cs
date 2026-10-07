@@ -11,6 +11,21 @@ public class PlayerStateMachine : MonoBehaviour
 
         stateMachine = new StateMachine();
     }
+    private void OnEnable()
+    {
+        if (playerController != null)
+        {
+            playerController.OnJumpInput += HandleJumpInput;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (playerController != null)
+        {
+            playerController.OnJumpInput -= HandleJumpInput;
+        }
+    }
 
     private void Start()
     {
@@ -32,16 +47,6 @@ public class PlayerStateMachine : MonoBehaviour
         stateMachine.ChangeState(state);
     }
 
-    private void OnEnable()
-    {
-        playerController.OnJumpInput += HandleJumpInput;
-    }
-
-    private void OnDisable()
-    {
-        playerController.OnJumpInput -= HandleJumpInput;
-    }
-
     private void HandleJumpInput()
     {
         if (!playerController.IsGrounded)
@@ -55,8 +60,6 @@ public class PlayerStateMachine : MonoBehaviour
         if (playerController == null)
             return;
 
-        playerController.JumpPlayer(jumpPower);
-
-        ChangeState(new PlayerJumpState(playerController, stateMachine));
+        ChangeState(new PlayerJumpState(playerController, stateMachine, jumpPower));
     }
 }
