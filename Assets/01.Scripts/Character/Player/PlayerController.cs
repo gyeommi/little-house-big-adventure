@@ -1,0 +1,172 @@
+using System;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class PlayerController : BaseCharacterController
+{
+    [Header("Player Movement")]
+    [SerializeField] private float sprintSpeed = 30f;
+
+    [Header("Camera")]
+    [SerializeField] private Transform cameraTransform;
+
+    [Header("Camera Look")]
+    [SerializeField] private Unity.Cinemachine.CinemachineInputAxisController inputAxisController;
+
+    private bool isLookOrbitYEnabled;
+
+    private Vector2 moveInput;
+    private bool isSprint;
+
+    public Vector2 MoveInput => moveInput;
+    public bool IsSprint => isSprint;
+    public bool HasMoveInput => moveInput.sqrMagnitude > 0.01f;
+    public bool IsGrounded => controller.isGrounded;
+
+    public event Action OnJumpInput;
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        if (cameraTransform == null)
+        {
+            Camera mainCamera = Camera.main;
+
+            if (mainCamera != null)
+            {
+                cameraTransform = mainCamera.transform;
+            }
+        }
+
+        // 마우스를 화면 중앙에 고정시키고 커서를 숨김
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    /// <summary>
+    /// 카메라 방향을 기준으로 이동 방향을 계산한다.
+    /// </summary>
+    public Vector3 GetMoveDirection()
+    {
+        if (cameraTransform == null)
+            return Vector3.zero;
+
+        Vector3 forward = cameraTransform.forward;
+        forward.y = 0f;
+        forward.Normalize();
+
+        Vector3 right = cameraTransform.right;
+        right.y = 0f;
+        right.Normalize();
+
+        Vector3 direction =
+            forward * moveInput.y +
+            right * moveInput.x;
+
+        return Vector3.ClampMagnitude(direction, 1f);
+    }
+
+    /// <summary>
+    /// 플레이어를 이동시킨다.
+    /// </summary>
+    public void MovePlayer(float speed)
+    {
+        Vector3 direction = GetMoveDirection();
+
+        Move(direction, speed);
+    }
+
+    /// <summary>
+    /// 플레이어를 점프시킨다.
+    /// </summary>
+    public void JumpPlayer()
+    {
+        Jump();
+    }
+
+    public void JumpPlayer(float jumpPower)
+    {
+        Jump(jumpPower);
+    }
+
+    /// <summary>
+    /// 이동 입력을 받는다.
+    /// </summary>
+    public void OnMove(InputAction.CallbackContext context)
+    {
+        moveInput = context.ReadValue<Vector2>();
+    }
+
+    /// <summary>
+    /// 점프 입력을 받는다.
+    /// </summary>
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+            return;
+
+        OnJumpInput?.Invoke();
+    }
+
+    /// <summary>
+    /// 달리기 입력을 받는다.
+    /// </summary>
+    public void OnSprint(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            isSprint = true;
+        }
+        else if (context.canceled)
+        {
+            isSprint = false;
+        }
+    }
+
+    /// <summary>
+    /// 달리기 속도를 반환한다.
+    /// </summary>
+    public float GetSprintSpeed()
+    {
+        return sprintSpeed;
+    }
+
+    /// <summary>
+    /// 마우스 우클릭으로 Look Orbit Y를 켜고 끈다.
+    /// </summary>
+    public void OnLookToggle(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+            return;
+
+        isLookOrbitYEnabled = !isLookOrbitYEnabled;
+
+        SetLookOrbitY(isLookOrbitYEnabled);
+    }
+
+    private void SetLookOrbitY(bool enabled)
+    {
+        if (inputAxisController == null)
+            return;
+
+        foreach (var controller in inputAxisController.Controllers)
+        {
+            if (controller.Name == "Look Orbit Y")
+            {
+                controller.Enabled = enabled;
+                break;
+            }
+        }
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        JumpPad jumpPad = hit.collider.GetComponent<JumpPad>();
+
+        if (jumpPad == null)
+            return;
+
+        jumpPad.Activate(this);
+    }
+}
