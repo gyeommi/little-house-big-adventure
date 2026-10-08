@@ -16,8 +16,7 @@ public abstract class BaseCharacterController : MonoBehaviour
 
     public CharacterController Controller => controller;
 
-    public bool IsGrounded =>
-        controller != null && controller.isGrounded;
+    public bool IsGrounded => controller != null && controller.isGrounded;
 
     public float MoveSpeed => moveSpeed;
     public float RotateSpeed => rotateSpeed;
@@ -64,8 +63,7 @@ public abstract class BaseCharacterController : MonoBehaviour
         if (direction.sqrMagnitude <= 0.01f)
             return;
 
-        Quaternion targetRotation =
-            Quaternion.LookRotation(direction);
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
 
         transform.rotation = Quaternion.Slerp(
             transform.rotation,

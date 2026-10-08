@@ -14,15 +14,14 @@ public class BookPool : MonoBehaviour
 
     public FallingBook Get(Vector3 position, Quaternion rotation)
     {
-        FallingBook book = pool.GetObject<FallingBook>(position, rotation);
-
-        book.SetPool(this);
-
-        return book;
+        return pool.GetObject<FallingBook>(position, rotation);
     }
 
     public void Return(FallingBook book)
     {
+        if (book == null)
+            return;
+
         pool.ReturnObject(book.gameObject);
     }
 }

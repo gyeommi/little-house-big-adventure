@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2583226410701039426}
   - component: {fileID: 3065975600265991863}
   - component: {fileID: 529834147611900615}
-  - component: {fileID: 5783089865943016966}
+  - component: {fileID: 1326157481472378991}
   - component: {fileID: 5800527509567519022}
   - component: {fileID: 2194658985657777907}
   m_Layer: 0
@@ -93,8 +93,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &5783089865943016966
-MeshCollider:
+--- !u!65 &1326157481472378991
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -111,10 +111,9 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: cf868f45db2cfa74bbf10d5fc3f94f96, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.05323122, y: 0.2661734, z: 0.22736119}
+  m_Center: {x: 0, y: 0.1330867, z: 0}
 --- !u!54 &5800527509567519022
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -159,4 +158,6 @@ MonoBehaviour:
   - {fileID: 100000, guid: b03e02f40b473054597ed51627526b9f, type: 3}
   - {fileID: 100000, guid: b821b1af8e8ec944e98b69a68bc5daeb, type: 3}
   - {fileID: 100000, guid: e4aacfee583eba34794c828ff53a0be8, type: 3}
-  groundTag: Carpet
+  carpetLayer:
+    serializedVersion: 2
+    m_Bits: 1024

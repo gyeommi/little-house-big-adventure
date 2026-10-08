@@ -19,6 +19,9 @@ public class FallingPointPool : MonoBehaviour
 
     public void Return(FallingPoint point)
     {
+        if (point == null)
+            return;
+
         pool.ReturnObject(point.gameObject);
     }
 }

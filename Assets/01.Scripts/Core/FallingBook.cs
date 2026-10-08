@@ -1,26 +1,20 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class FallingBook : MonoBehaviour, IPoolable
 {
-    [Header("Book Mesh")]
     [SerializeField] private GameObject[] bookMeshes;
+    [SerializeField] private LayerMask carpetLayer;
 
-    private string groundTag = "Carpet";
-
-    private BookPool pool;
     private BookTrapManager manager;
 
     private Rigidbody rb;
     private bool hasHitPlayer;
+    private bool isReturning;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-    }
-
-    public void SetPool(BookPool pool)
-    {
-        this.pool = pool;
     }
 
     public void Initialize(BookTrapManager manager)
@@ -31,6 +25,7 @@ public class FallingBook : MonoBehaviour, IPoolable
     public void Init()
     {
         hasHitPlayer = false;
+        isReturning = false;
 
         ResetPhysics();
         SetRandomMesh();
@@ -66,20 +61,38 @@ public class FallingBook : MonoBehaviour, IPoolable
                 hasHitPlayer = true;
 
                 manager.OnPlayerHit(this);
-
                 return;
             }
         }
+    }
 
-        // Ä«Æê Ãæµ¹
-        if (collision.gameObject.CompareTag(groundTag))
+    private void OnTriggerEnter(Collider other)
+    {
+        if (isReturning)
+            return;
+
+        if ((carpetLayer.value & (1 << other.gameObject.layer)) != 0)
         {
-            manager.ReleaseBook(this);
+            ReturnAfterDelay().Forget();
         }
+    }
+
+    private async UniTaskVoid ReturnAfterDelay()
+    {
+        isReturning = true;
+
+        await UniTask.Delay(2000);
+
+        if (this == null || !gameObject.activeSelf)
+            return;
+
+        manager.ReleaseBook(this);
     }
 
     public void ReturnToPool()
     {
         ResetPhysics();
+        hasHitPlayer = false;
+        isReturning = false;
     }
 }

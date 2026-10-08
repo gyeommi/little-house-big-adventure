@@ -7,21 +7,21 @@ public class BookTrapManager : MonoBehaviour
     [Header("Trap")]
     [SerializeField] private float trapDuration = 60f;
 
-    [Header("Falling Area")]
-    [SerializeField] private BookPool bookPool;
-    [SerializeField] private Transform fallingArea;
-    [SerializeField] private Transform fallingGround;
+    [Header("Carpet")]
+    [SerializeField] private BoxCollider fallingAreaCollider;
+    [SerializeField] private GameObject carpetBoundary;
 
-    [SerializeField] private float fallingAreaWidth = 120f;
-    [SerializeField] private float fallingAreaDepth = 200f;
+    [Header("Falling Book")]
+    [SerializeField] private BookPool bookPool;
 
     [Header("Falling Warning")]
     [SerializeField] private FallingPointPool fallingPointPool;
     [SerializeField] private float warningDuration = 0.7f;
 
     [Header("Falling Interval")]
-    [SerializeField] private float minFallingInterval = 1f;
-    [SerializeField] private float maxFallingInterval = 1.5f;
+    [SerializeField] private float normalFallingInterval = 7f;
+    [SerializeField] private float finalFallingInterval = 4f;
+    [SerializeField] private float finalPhaseTime = 20f;
 
     [Header("Reward Books")]
     [SerializeField] private GameObject rewardBookPrefab;
@@ -42,24 +42,37 @@ public class BookTrapManager : MonoBehaviour
             return;
 
         isTrapActive = true;
+
+        // Carpet 밖으로 못 나가게 함
+        carpetBoundary.SetActive(true);
+
         trapCoroutine = StartCoroutine(TrapRoutine());
     }
 
     private IEnumerator TrapRoutine()
     {
-        float elapsedTime = 0f;
+        float startTime = Time.time;
 
-        while (elapsedTime < trapDuration)
+        while (true)
         {
+            float elapsedTime = Time.time - startTime;
+            float remainingTime = trapDuration - elapsedTime;
+
+            if (remainingTime <= 0f)
+                break;
+
+            float fallingInterval =
+                remainingTime <= finalPhaseTime ? finalFallingInterval : normalFallingInterval;
+
             // 책 낙하
             yield return StartCoroutine(SpawnFallingBook());
 
-            // 다음 책까지 대기
-            float delay = Random.Range(minFallingInterval, maxFallingInterval);
+            elapsedTime = Time.time - startTime;
 
-            yield return new WaitForSeconds(delay);
+            if (elapsedTime >= trapDuration)
+                break;
 
-            elapsedTime += warningDuration + delay;
+            yield return new WaitForSeconds(fallingInterval);
         }
 
         CompleteTrap();
@@ -67,22 +80,22 @@ public class BookTrapManager : MonoBehaviour
 
     private IEnumerator SpawnFallingBook()
     {
-        // 1. 천장에서 랜덤 위치 결정
-        Vector3 spawnPosition = GetRandomSpawnPosition();
+        // Carpet 위에서 랜덤 위치 결정
+        Vector3 targetPosition = GetRandomCarpetPosition();
 
-        // 2. 바닥 위치
-        Vector3 fallingPosition = new Vector3(spawnPosition.x, fallingGround.position.y, spawnPosition.z);
+        // 책은 Carpet 위 높은 위치에서 생성
+        Vector3 spawnPosition = targetPosition + Vector3.up * 10f;
 
-        // 3. 경고 표시
-        FallingPoint fallingPoint = fallingPointPool.Get(fallingPosition, Quaternion.identity);
+        // 경고 표시
+        FallingPoint fallingPoint = fallingPointPool.Get(targetPosition, Quaternion.identity);
 
-        // 4. 경고 시간
+        // 경고 시간
         yield return new WaitForSeconds(warningDuration);
 
-        // 5. 경고 제거
+        // 경고 제거
         fallingPointPool.Return(fallingPoint);
 
-        // 6. 책 생성
+        // 책 생성
         FallingBook book = bookPool.Get(spawnPosition, Random.rotation);
 
         book.Initialize(this);
@@ -90,22 +103,22 @@ public class BookTrapManager : MonoBehaviour
         activeBooks.Add(book);
     }
 
-    private Vector3 GetRandomSpawnPosition()
+    private Vector3 GetRandomCarpetPosition()
     {
-        float randomX = Random.Range(-fallingAreaWidth * 0.5f, fallingAreaWidth * 0.5f);
+        Bounds bounds = fallingAreaCollider.bounds;
 
-        float randomZ = Random.Range(-fallingAreaDepth * 0.5f, fallingAreaDepth * 0.5f);
+        float randomX = Random.Range(bounds.min.x, bounds.max.x);
+        float randomZ = Random.Range(bounds.min.z, bounds.max.z);
 
-        return fallingArea.TransformPoint(new Vector3(randomX, 0f, randomZ));
+        return new Vector3(randomX, bounds.max.y, randomZ);
     }
-
-    #region Player Hit
 
     public void OnPlayerHit(FallingBook book)
     {
         ReleaseBook(book);
 
-        PlayerRespawn respawn = FindFirstObjectByType<PlayerRespawn>();
+        PlayerRespawn respawn =
+            FindFirstObjectByType<PlayerRespawn>();
 
         if (respawn != null)
         {
@@ -115,16 +128,14 @@ public class BookTrapManager : MonoBehaviour
         ResetTrap();
     }
 
-    #endregion
-
-    #region Trap Complete / Reset
-
     private void CompleteTrap()
     {
         isTrapActive = false;
         isCompleted = true;
 
         trapCoroutine = null;
+
+        carpetBoundary.SetActive(false);
 
         ReleaseAllBooks();
 
@@ -143,21 +154,15 @@ public class BookTrapManager : MonoBehaviour
 
         isTrapActive = false;
 
+        carpetBoundary.SetActive(false);
+
         ReleaseAllBooks();
     }
-
-    #endregion
-
-    #region Reward
 
     private void SpawnRewardBooks()
     {
         rewardBookPrefab.SetActive(true);
     }
-
-    #endregion
-
-    #region Book Pool
 
     public void ReleaseBook(FallingBook book)
     {
@@ -178,6 +183,4 @@ public class BookTrapManager : MonoBehaviour
             bookPool.Return(book);
         }
     }
-
-    #endregion
 }

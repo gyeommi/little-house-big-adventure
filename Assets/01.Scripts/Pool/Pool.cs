@@ -1,14 +1,26 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class Pool
 {
-    private readonly Queue<GameObject> pool = new();
-
-    private readonly GameObject prefab;
-    private readonly Transform parent;
+    private Queue<GameObject> pool = new Queue<GameObject>();
+    private GameObject prefab;
+    private Transform parent;
 
     public int AvailableCount => pool.Count;
+
+    // 모든 대여 오브젝트를 반납한 스테이지 전환 중에 호출한다.
+    public void Resize(int size)
+    {
+        while (pool.Count < size) Create();
+        while (pool.Count > size) UnityEngine.Object.Destroy(pool.Dequeue());
+    }
+
+    public void Dispose()
+    {
+        UnityEngine.Object.Destroy(parent.gameObject);
+        pool.Clear();
+    }
 
     public Pool(GameObject prefab, Transform parent, int size)
     {
@@ -23,71 +35,37 @@ public class Pool
 
     private GameObject Create()
     {
-        GameObject go = Object.Instantiate(prefab, parent);
+        GameObject go = UnityEngine.Object.Instantiate(prefab, parent);
         go.SetActive(false);
-
         pool.Enqueue(go);
-
         return go;
     }
 
-    public T GetObject<T>(
-        Vector3 position,
-        Quaternion rotation
-    ) where T : Component
+    public T GetObject<T>(Vector3 position, Quaternion rotation) where T : Component
     {
         if (pool.Count == 0)
-        {
             Create();
-        }
 
         GameObject go = pool.Dequeue();
-
-        go.transform.SetPositionAndRotation(
-            position,
-            rotation
-        );
-
+        go.transform.SetPositionAndRotation(position, rotation);
         go.SetActive(true);
 
+        // 꺼낼 때 초기화 훅
         if (go.TryGetComponent(out IPoolable poolable))
-        {
             poolable.Init();
-        }
 
         return go.GetComponent<T>();
     }
 
     public void ReturnObject(GameObject go)
     {
-        if (!go.activeSelf)
+        if (!go.activeSelf) // 이미 반납(비활성)된 오브젝트면 무시 → 중복 enqueue 방지
             return;
 
         if (go.TryGetComponent(out IPoolable poolable))
-        {
             poolable.ReturnToPool();
-        }
 
         go.SetActive(false);
         pool.Enqueue(go);
-    }
-
-    public void Resize(int size)
-    {
-        while (pool.Count < size)
-        {
-            Create();
-        }
-
-        while (pool.Count > size)
-        {
-            Object.Destroy(pool.Dequeue());
-        }
-    }
-
-    public void Dispose()
-    {
-        Object.Destroy(parent.gameObject);
-        pool.Clear();
     }
 }
