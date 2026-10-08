@@ -81,7 +81,7 @@ public class FallingBook : MonoBehaviour, IPoolable
     {
         isReturning = true;
 
-        await UniTask.Delay(2000);
+        await UniTask.Delay(3000);
 
         if (this == null || !gameObject.activeSelf)
             return;
