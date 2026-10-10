@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerAnimator : MonoBehaviour
@@ -5,9 +6,12 @@ public class PlayerAnimator : MonoBehaviour
     private Animator animator;
     private PlayerController player;
 
+    private bool throwAnimationFinished;
+
     private static readonly int Speed = Animator.StringToHash("Speed");
     private static readonly int IsGrounded = Animator.StringToHash("IsGrounded");
     private static readonly int Jump = Animator.StringToHash("Jump");
+    private static readonly int Throw = Animator.StringToHash("Throw");
 
     private void Awake()
     {
@@ -53,5 +57,30 @@ public class PlayerAnimator : MonoBehaviour
     public void PlayJump()
     {
         animator.SetTrigger(Jump);
+    }
+
+    public void PlayThrow()
+    {
+        throwAnimationFinished = false;
+
+        animator.ResetTrigger(Throw);
+        animator.SetTrigger(Throw);
+    }
+
+    public void FinishThrowAnimation()
+    {
+        throwAnimationFinished = true;
+        Debug.Log("던지기 애니메이션 종료 이벤트");
+    }
+
+    public bool IsThrowAnimationFinished()
+    {
+        return throwAnimationFinished;
+    }
+
+    public void ResetThrow()
+    {
+        animator.ResetTrigger(Throw);
+        throwAnimationFinished = false;
     }
 }

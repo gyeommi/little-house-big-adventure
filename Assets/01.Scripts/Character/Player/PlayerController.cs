@@ -24,6 +24,7 @@ public class PlayerController : BaseCharacterController
     public bool IsGrounded => controller.isGrounded;
 
     public event Action OnJumpInput;
+    public event Action OnThrowInput;
 
     protected override void Awake()
     {
@@ -60,9 +61,7 @@ public class PlayerController : BaseCharacterController
         right.y = 0f;
         right.Normalize();
 
-        Vector3 direction =
-            forward * moveInput.y +
-            right * moveInput.x;
+        Vector3 direction = forward * moveInput.y + right * moveInput.x;
 
         return Vector3.ClampMagnitude(direction, 1f);
     }
@@ -122,6 +121,17 @@ public class PlayerController : BaseCharacterController
         {
             isSprint = false;
         }
+    }
+
+    /// <summary>
+    /// 책 던지기 입력을 받는다.
+    /// </summary>
+    public void OnThrow(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+            return;
+
+        OnThrowInput?.Invoke();
     }
 
     /// <summary>
