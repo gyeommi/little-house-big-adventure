@@ -105,13 +105,20 @@ public class BookTrapManager : MonoBehaviour
 
     private Vector3 GetRandomCarpetPosition()
     {
-        Bounds bounds = fallingAreaCollider.bounds;
+        // BoxCollider의 로컬 공간에서 랜덤 위치 계산
+        Vector3 localCenter = fallingAreaCollider.center;
+        Vector3 halfSize = fallingAreaCollider.size * 0.5f;
 
-        float randomX = Random.Range(bounds.min.x, bounds.max.x);
-        float randomZ = Random.Range(bounds.min.z, bounds.max.z);
+        float randomX = Random.Range(localCenter.x - halfSize.x, localCenter.x + halfSize.x);
 
-        return new Vector3(randomX, bounds.max.y, randomZ);
+        float randomZ = Random.Range(localCenter.z - halfSize.z, localCenter.z + halfSize.z);
+
+        // Collider의 로컬 좌표를 월드 좌표로 변환
+        Vector3 localPosition = new Vector3(randomX, localCenter.y + halfSize.y, randomZ);
+
+        return fallingAreaCollider.transform.TransformPoint(localPosition);
     }
+
 
     public void OnPlayerHit(FallingBook book)
     {
