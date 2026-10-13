@@ -25,6 +25,7 @@ public class PlayerController : BaseCharacterController
 
     public event Action OnJumpInput;
     public event Action OnThrowInput;
+    public event Action OnButtSlamInput;
 
     protected override void Awake()
     {
@@ -132,6 +133,19 @@ public class PlayerController : BaseCharacterController
             return;
 
         OnThrowInput?.Invoke();
+    }
+
+    /// <summary>
+    /// ¾ûµ¢¹æ¾Æ ÀÔ·ÂÀ» ¹Þ´Â´Ù.
+    /// </summary>
+    public void OnButtSlam(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+            return;
+
+        Debug.Log("¾ûµ¢¹æ¾Æ ÀÔ·Â!");
+
+        OnButtSlamInput?.Invoke();
     }
 
     /// <summary>
