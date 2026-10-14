@@ -15,6 +15,9 @@ public class FirstBossController : BossController
     [SerializeField] private Transform player;
     [SerializeField] private float chargeRange = 5f;
 
+    [Header("Book Rain")]
+    [SerializeField] private BookTrapManager bookTrapManager;
+
     private float lastAttackTime;
     private AttackType currentAttackType;
 
@@ -104,7 +107,15 @@ public class FirstBossController : BossController
     /// </summary>
     public void StartBookRain()
     {
-        // TODO: 책 폭격 시작
+        if (bookTrapManager == null)
+        {
+            Debug.LogWarning(
+                "FirstBossController: BookTrapManager가 설정되지 않았습니다."
+            );
+            return;
+        }
+
+        bookTrapManager.StartBossBookRain();
     }
 
     /// <summary>
