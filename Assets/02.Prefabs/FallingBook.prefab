@@ -160,4 +160,4 @@ MonoBehaviour:
   - {fileID: 100000, guid: e4aacfee583eba34794c828ff53a0be8, type: 3}
   carpetLayer:
     serializedVersion: 2
-    m_Bits: 1024
+    m_Bits: 3072

@@ -1,11 +1,21 @@
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 public class ThrowableBook : MonoBehaviour, IInteractable
 {
+    [Header("Lifetime")]
+    [SerializeField] private float expireTime = 10f;
+
+    private bool isBossReward;
+    private bool hasInteracted;
+
     private Rigidbody rb;
     private Collider[] bookColliders;
+
+    private bool isThrown;
+    private int lifeCycle;
 
     public bool IsHeld { get; private set; }
 
@@ -15,13 +25,20 @@ public class ThrowableBook : MonoBehaviour, IInteractable
         bookColliders = GetComponentsInChildren<Collider>();
     }
 
+    private void OnEnable()
+    {
+        IsHeld = false;
+        isThrown = false;
+    }
+
     // PlayerInteraction에서 호출
     public void Interact()
     {
         if (IsHeld)
             return;
 
-        PlayerBookThrow playerBookThrow = FindFirstObjectByType<PlayerBookThrow>();
+        PlayerBookThrow playerBookThrow =
+            FindFirstObjectByType<PlayerBookThrow>();
 
         if (playerBookThrow == null)
             return;
@@ -32,6 +49,14 @@ public class ThrowableBook : MonoBehaviour, IInteractable
     public void PickUp(Transform holdPoint)
     {
         IsHeld = true;
+        isThrown = false;
+
+        // 실제로 획득했다면 타이머 취소
+        if (isBossReward)
+        {
+            hasInteracted = true;
+            lifeCycle++;
+        }
 
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
@@ -47,6 +72,7 @@ public class ThrowableBook : MonoBehaviour, IInteractable
     public void Throw(Vector3 direction, float force)
     {
         IsHeld = false;
+        isThrown = true;
 
         transform.SetParent(null);
 
@@ -56,11 +82,43 @@ public class ThrowableBook : MonoBehaviour, IInteractable
         rb.AddForce(direction * force, ForceMode.Impulse);
     }
 
+    private async UniTaskVoid ExpireAfterDelay(int currentLifeCycle)
+    {
+        await UniTask.Delay(
+            (int)(expireTime * 1000),
+            ignoreTimeScale: true
+        );
+
+        if (this == null || !gameObject.activeInHierarchy)
+            return;
+
+        // 타이머가 취소되었거나 이미 상호작용한 경우
+        if (currentLifeCycle != lifeCycle ||
+            IsHeld ||
+            hasInteracted ||
+            !isBossReward)
+        {
+            return;
+        }
+
+        gameObject.SetActive(false);
+    }
+
     private void SetCollidersEnabled(bool enabled)
     {
         foreach (Collider col in bookColliders)
         {
             col.enabled = enabled;
         }
+    }
+
+    // 보스 보상 책으로 설정
+    public void SetBossReward()
+    {
+        isBossReward = true;
+        hasInteracted = false;
+
+        int currentLifeCycle = ++lifeCycle;
+        ExpireAfterDelay(currentLifeCycle).Forget();
     }
 }

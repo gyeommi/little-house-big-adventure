@@ -38,6 +38,14 @@ public class BookTrapManager : MonoBehaviour
     [SerializeField] private float rewardSpawnRadius = 2f;
     [SerializeField] private float rewardSpawnHeight = 0.5f;
 
+    [Header("Boss Controller")]
+    [SerializeField] private FirstBossController firstBossController;
+
+    [Header("Damage Settings")]
+    [SerializeField] private int carpetBookDamage = 1;
+    [SerializeField] private int bossBookDamage = 20;
+
+
     private bool isTrapActive;
     private bool isCompleted;
     private bool isBossBookRainActive;
@@ -79,7 +87,7 @@ public class BookTrapManager : MonoBehaviour
                     : normalFallingInterval;
 
             yield return StartCoroutine(
-                SpawnFallingBook(fallingAreaCollider)
+                SpawnFallingBook(fallingAreaCollider, carpetBookDamage)
             );
 
             if (Time.time - startTime >= trapDuration)
@@ -128,23 +136,36 @@ public class BookTrapManager : MonoBehaviour
     // Boss Book Rain
     // ========================================
 
-    public void StartBossBookRain()
+    public bool StartBossBookRain()
     {
         if (isBossBookRainActive)
-            return;
+        {
+            Debug.LogWarning("이미 책 폭격이 진행 중입니다.");
+            return false;
+        }
 
         if (bossFallingAreaCollider == null)
         {
-            Debug.LogWarning(
+            Debug.LogError(
                 "BookTrapManager: Boss Falling Area Collider가 설정되지 않았습니다."
             );
-            return;
+            return false;
+        }
+
+        if (firstBossController == null)
+        {
+            Debug.LogError(
+                "BookTrapManager: FirstBossController가 연결되지 않았습니다."
+            );
+            return false;
         }
 
         isBossBookRainActive = true;
 
         bossBookRainCoroutine =
             StartCoroutine(BossBookRainRoutine());
+
+        return true;
     }
 
     private IEnumerator BossBookRainRoutine()
@@ -154,7 +175,7 @@ public class BookTrapManager : MonoBehaviour
         while (Time.time - startTime < bossBookRainDuration)
         {
             yield return StartCoroutine(
-                SpawnFallingBook(bossFallingAreaCollider)
+                SpawnFallingBook(bossFallingAreaCollider, bossBookDamage)
             );
 
             if (Time.time - startTime >= bossBookRainDuration)
@@ -163,16 +184,22 @@ public class BookTrapManager : MonoBehaviour
             yield return new WaitForSeconds(bossFallingInterval);
         }
 
-        // 폭격 중 생성된 책을 전부 제거
+        // 폭격 중 생성된 책 제거
         ReleaseAllBooks();
 
-        // 보상 책 3개 활성화
+        // 보상 책 생성
         SpawnBossRewardBooks();
 
         isBossBookRainActive = false;
         bossBookRainCoroutine = null;
 
+        // 애니메이션 종료
+        firstBossController.PlayBookRainAnimation(false);
+
         Debug.Log("보스 책 폭격 종료! 보상 책 3개 생성");
+
+        // 공격 종료 및 쿨다운 시작
+        firstBossController.NotifyAttackFinished();
     }
 
     private void SpawnBossRewardBooks()
@@ -183,24 +210,37 @@ public class BookTrapManager : MonoBehaviour
             return;
         }
 
+        float[] xOffsets = { -20f, 0f, 20f };
+
         for (int i = 0; i < bossRewardBookCount; i++)
         {
-            float angle = i * (360f / bossRewardBookCount);
+            Vector3 spawnPosition = new Vector3(
+                player.position.x + xOffsets[i],
+                player.position.y + rewardSpawnHeight,
+                player.position.z + 15f
+            );
 
-            Vector3 offset = new Vector3(
-                Mathf.Cos(angle * Mathf.Deg2Rad),
-                0f,
-                Mathf.Sin(angle * Mathf.Deg2Rad)
-            ) * rewardSpawnRadius;
-
-            Vector3 spawnPosition = player.position + offset;
-            spawnPosition.y += rewardSpawnHeight;
-
-            Instantiate(
+            // 보상 책 생성
+            GameObject rewardBook = Instantiate(
                 bossRewardBookPrefab,
                 spawnPosition,
                 Quaternion.identity
             );
+
+            // 보스 보상 책으로 설정
+            ThrowableBook throwableBook =
+                rewardBook.GetComponent<ThrowableBook>();
+
+            if (throwableBook != null)
+            {
+                throwableBook.SetBossReward();
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "보상 책 프리팹에 ThrowableBook 컴포넌트가 없습니다."
+                );
+            }
         }
     }
 
@@ -208,7 +248,7 @@ public class BookTrapManager : MonoBehaviour
     // Shared Falling Book
     // ========================================
 
-    private IEnumerator SpawnFallingBook(BoxCollider areaCollider)
+    private IEnumerator SpawnFallingBook(BoxCollider areaCollider, int damage)
     {
         if (areaCollider == null)
             yield break;
@@ -227,7 +267,7 @@ public class BookTrapManager : MonoBehaviour
         FallingBook book =
             bookPool.Get(spawnPosition, Random.rotation);
 
-        book.Initialize(this);
+        book.Initialize(this, damage);
 
         activeBooks.Add(book);
     }
@@ -260,20 +300,32 @@ public class BookTrapManager : MonoBehaviour
     // Hit & Pool
     // ========================================
 
-    public void OnPlayerHit(FallingBook book)
+    public void OnPlayerHit(FallingBook book, int damage)
     {
         ReleaseBook(book);
 
-        PlayerRespawn respawn =
-            FindFirstObjectByType<PlayerRespawn>();
-
-        if (respawn != null)
-            respawn.Respawn();
-
-        // 책장 함정 중 맞았을 때만 함정을 초기화한다.
-        // 보스의 책 폭격은 여기서 중단하지 않는다.
+        // 책장 함정에 맞은 경우
         if (isTrapActive)
+        {
             ResetTrap();
+
+            PlayerRespawn respawn =
+                FindFirstObjectByType<PlayerRespawn>();
+
+            if (respawn != null)
+                respawn.Respawn();
+
+            return;
+        }
+
+        // 보스 책 폭격에 맞은 경우
+        PlayerHealth playerHealth =
+            FindFirstObjectByType<PlayerHealth>();
+
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(damage);
+        }
     }
 
     public void ReleaseBook(FallingBook book)

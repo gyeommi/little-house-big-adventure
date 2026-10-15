@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class BossIdleState : BaseState
@@ -24,7 +23,9 @@ public class BossIdleState : BaseState
 
         if (firstBoss.CanAttack())
         {
-            stateMachine.ChangeState(new BossAttackState(boss, stateMachine));
+            stateMachine.ChangeState(
+                new BossAttackState(boss, stateMachine)
+            );
         }
     }
 

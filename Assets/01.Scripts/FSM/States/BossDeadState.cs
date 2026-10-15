@@ -4,31 +4,39 @@ using UnityEngine;
 public class BossDeadState : BaseState
 {
     private BossController boss;
+    private FirstBossController firstBoss;
 
-    public BossDeadState(BossController controller, StateMachine stateMachine) : base(controller, stateMachine)
+    public BossDeadState(
+        BossController controller,
+        StateMachine stateMachine
+    ) : base(controller, stateMachine)
     {
         boss = controller;
+        firstBoss = controller as FirstBossController;
     }
 
     public override void Enter()
     {
         Debug.Log("보스 사망");
 
-        // BaseCharacterController의 이동 및 중력 업데이트 중지
-        boss.enabled = false;
+        if (firstBoss != null)
+        {
+            firstBoss.PlayDeadAnimation();
+        }
 
-        // TODO: 사망 애니메이션, 보상 지급 등
+        // 보스의 행동 업데이트 중지
+        boss.enabled = false;
     }
 
     public override void Update()
     {
     }
 
-    public override void FixedUpdate() 
+    public override void FixedUpdate()
     {
     }
 
-    public override void Exit() 
+    public override void Exit()
     {
     }
 }

@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class FallingBook : MonoBehaviour, IPoolable
 {
-    [SerializeField] private GameObject[] bookMeshes;
     [SerializeField] private LayerMask carpetLayer;
 
-    private BookTrapManager manager;
+    private BookTrapManager bookTrapManager;
+    private int damage;
 
     private Rigidbody rb;
     private bool hasHitPlayer;
@@ -17,9 +17,10 @@ public class FallingBook : MonoBehaviour, IPoolable
         rb = GetComponent<Rigidbody>();
     }
 
-    public void Initialize(BookTrapManager manager)
+    public void Initialize(BookTrapManager bookTrapManager, int damage)
     {
-        this.manager = manager;
+        this.bookTrapManager = bookTrapManager;
+        this.damage = damage;
     }
 
     public void Init()
@@ -28,19 +29,6 @@ public class FallingBook : MonoBehaviour, IPoolable
         isReturning = false;
 
         ResetPhysics();
-        SetRandomMesh();
-    }
-
-    private void SetRandomMesh()
-    {
-        foreach (GameObject mesh in bookMeshes)
-        {
-            mesh.SetActive(false);
-        }
-
-        int index = Random.Range(0, bookMeshes.Length);
-
-        bookMeshes[index].SetActive(true);
     }
 
     private void ResetPhysics()
@@ -49,22 +37,22 @@ public class FallingBook : MonoBehaviour, IPoolable
         rb.angularVelocity = Vector3.zero;
     }
 
+
     private void OnCollisionEnter(Collision collision)
     {
-        // 플레이어 충돌
-        if (!hasHitPlayer)
+        if (hasHitPlayer)
+            return;
+
+        PlayerController player = collision.collider.GetComponent<PlayerController>();
+
+        if (player != null)
         {
-            PlayerController player = collision.collider.GetComponent<PlayerController>();
+            hasHitPlayer = true;
 
-            if (player != null)
-            {
-                hasHitPlayer = true;
-
-                manager.OnPlayerHit(this);
-                return;
-            }
+            bookTrapManager.OnPlayerHit(this, damage);
         }
     }
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -86,7 +74,7 @@ public class FallingBook : MonoBehaviour, IPoolable
         if (this == null || !gameObject.activeSelf)
             return;
 
-        manager.ReleaseBook(this);
+        bookTrapManager.ReleaseBook(this);
     }
 
     public void ReturnToPool()
