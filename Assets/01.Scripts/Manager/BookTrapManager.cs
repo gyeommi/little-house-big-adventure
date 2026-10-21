@@ -22,6 +22,7 @@ public class BookTrapManager : MonoBehaviour
     [Header("Falling Warning")]
     [SerializeField] private FallingPointPool fallingPointPool;
     [SerializeField] private float warningDuration = 0.7f;
+    [SerializeField] private float warningHeightOffset = -0.1f;
 
     [Header("Carpet Falling Interval")]
     [SerializeField] private float normalFallingInterval = 7f;
@@ -44,7 +45,6 @@ public class BookTrapManager : MonoBehaviour
     [Header("Damage Settings")]
     [SerializeField] private int carpetBookDamage = 1;
     [SerializeField] private int bossBookDamage = 20;
-
 
     private bool isTrapActive;
     private bool isCompleted;
@@ -256,8 +256,8 @@ public class BookTrapManager : MonoBehaviour
         Vector3 targetPosition = GetRandomFallingPosition(areaCollider);
         Vector3 spawnPosition = targetPosition + Vector3.up * spawnHeight;
 
-        FallingPoint fallingPoint =
-            fallingPointPool.Get(targetPosition, Quaternion.identity);
+        Vector3 warningPosition = targetPosition + Vector3.up * warningHeightOffset;
+        FallingPoint fallingPoint = fallingPointPool.Get(warningPosition, Quaternion.identity);
 
         yield return new WaitForSeconds(warningDuration);
 

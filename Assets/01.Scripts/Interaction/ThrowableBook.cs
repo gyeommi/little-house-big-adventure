@@ -8,6 +8,10 @@ public class ThrowableBook : MonoBehaviour, IInteractable
     [Header("Lifetime")]
     [SerializeField] private float expireTime = 10f;
 
+    [Header("Collision")]
+    [SerializeField] private int enemyDamage = 15;
+    [SerializeField] private LayerMask enemyLayer;
+
     private bool isBossReward;
     private bool hasInteracted;
 
@@ -15,6 +19,7 @@ public class ThrowableBook : MonoBehaviour, IInteractable
     private Collider[] bookColliders;
 
     private bool isThrown;
+    private bool hasHitTarget;
     private int lifeCycle;
 
     public bool IsHeld { get; private set; }
@@ -29,6 +34,7 @@ public class ThrowableBook : MonoBehaviour, IInteractable
     {
         IsHeld = false;
         isThrown = false;
+        hasHitTarget = false;
     }
 
     // PlayerInteraction에서 호출
@@ -51,7 +57,6 @@ public class ThrowableBook : MonoBehaviour, IInteractable
         IsHeld = true;
         isThrown = false;
 
-        // 실제로 획득했다면 타이머 취소
         if (isBossReward)
         {
             hasInteracted = true;
@@ -73,13 +78,54 @@ public class ThrowableBook : MonoBehaviour, IInteractable
     {
         IsHeld = false;
         isThrown = true;
+        hasHitTarget = false;
 
         transform.SetParent(null);
 
         SetCollidersEnabled(true);
 
         rb.isKinematic = false;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
         rb.AddForce(direction * force, ForceMode.Impulse);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        // 직접 던진 책만 충돌 효과 발생
+        if (!isThrown || hasHitTarget)
+            return;
+
+        // 책장 문과 충돌
+        if (collision.gameObject.CompareTag("BookshelfDoor"))
+        {
+            hasHitTarget = true;
+            OpenBookshelf(collision.gameObject);
+            return;
+        }
+
+        // Enemy Layer와 충돌
+        int enemyLayerIndex = collision.gameObject.layer;
+
+        if ((enemyLayer.value & (1 << enemyLayerIndex)) != 0)
+        {
+            hasHitTarget = true;
+
+            EnemyHealth enemy = collision.gameObject.GetComponent<EnemyHealth>();
+
+            if (enemy != null)
+            {
+                enemy.TakeDamage(enemyDamage);
+            }
+        }
+    }
+
+    private void OpenBookshelf(GameObject bookshelfDoor)
+    {
+        bookshelfDoor.SetActive(false);
+
+        Debug.Log("책장 문이 열렸습니다!");
     }
 
     private async UniTaskVoid ExpireAfterDelay(int currentLifeCycle)
@@ -92,7 +138,6 @@ public class ThrowableBook : MonoBehaviour, IInteractable
         if (this == null || !gameObject.activeInHierarchy)
             return;
 
-        // 타이머가 취소되었거나 이미 상호작용한 경우
         if (currentLifeCycle != lifeCycle ||
             IsHeld ||
             hasInteracted ||

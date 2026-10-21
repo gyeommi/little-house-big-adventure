@@ -153,11 +153,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ec7a90395409bd44bb7f0c6e665f43d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FallingBook
-  bookMeshes:
-  - {fileID: 100000, guid: cf868f45db2cfa74bbf10d5fc3f94f96, type: 3}
-  - {fileID: 100000, guid: b03e02f40b473054597ed51627526b9f, type: 3}
-  - {fileID: 100000, guid: b821b1af8e8ec944e98b69a68bc5daeb, type: 3}
-  - {fileID: 100000, guid: e4aacfee583eba34794c828ff53a0be8, type: 3}
   carpetLayer:
     serializedVersion: 2
-    m_Bits: 3072
+    m_Bits: 11264
+  gravityScale: 4
+  maxFallSpeed: 35

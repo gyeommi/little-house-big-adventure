@@ -5,6 +5,10 @@ public class FallingBook : MonoBehaviour, IPoolable
 {
     [SerializeField] private LayerMask carpetLayer;
 
+    [Header("Fall Settings")]
+    [SerializeField] private float gravityScale = 4f;
+    [SerializeField] private float maxFallSpeed = 35f;
+
     private BookTrapManager bookTrapManager;
     private int damage;
 
@@ -15,6 +19,26 @@ public class FallingBook : MonoBehaviour, IPoolable
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+    }
+
+    private void FixedUpdate()
+    {
+        if (rb.isKinematic)
+            return;
+
+        rb.AddForce(
+            Physics.gravity * (gravityScale - 1f),
+            ForceMode.Acceleration
+        );
+
+        if (rb.linearVelocity.y < -maxFallSpeed)
+        {
+            rb.linearVelocity = new Vector3(
+                rb.linearVelocity.x,
+                -maxFallSpeed,
+                rb.linearVelocity.z
+            );
+        }
     }
 
     public void Initialize(BookTrapManager bookTrapManager, int damage)
@@ -35,24 +59,24 @@ public class FallingBook : MonoBehaviour, IPoolable
     {
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
+        rb.useGravity = true;
+        rb.mass = 5f;
     }
-
 
     private void OnCollisionEnter(Collision collision)
     {
         if (hasHitPlayer)
             return;
 
-        PlayerController player = collision.collider.GetComponent<PlayerController>();
+        PlayerController player =
+            collision.collider.GetComponent<PlayerController>();
 
         if (player != null)
         {
             hasHitPlayer = true;
-
             bookTrapManager.OnPlayerHit(this, damage);
         }
     }
-
 
     private void OnTriggerEnter(Collider other)
     {
