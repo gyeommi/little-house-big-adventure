@@ -137,6 +137,7 @@ public class PlayerController : BaseCharacterController
 
     /// <summary>
     /// 엉덩방아 입력을 받는다.
+    /// Ctrl 입력 시 구독 중인 발사 구역에 입력을 전달한다.
     /// </summary>
     public void OnButtSlam(InputAction.CallbackContext context)
     {
