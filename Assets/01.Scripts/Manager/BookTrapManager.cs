@@ -1,7 +1,8 @@
-
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BookTrapManager : MonoBehaviour
 {
@@ -31,6 +32,7 @@ public class BookTrapManager : MonoBehaviour
 
     [Header("Reward Books")]
     [SerializeField] private GameObject rewardBookPrefab;
+    [SerializeField] private GameObject trigger;
 
     [Header("Boss Reward Books")]
     [SerializeField] private GameObject bossRewardBookPrefab;
@@ -46,18 +48,68 @@ public class BookTrapManager : MonoBehaviour
     [SerializeField] private int carpetBookDamage = 1;
     [SerializeField] private int bossBookDamage = 20;
 
+    [Header("Timer UI")]
+    [SerializeField] private Slider timerSlider;
+    [SerializeField] private TMP_Text timerText;
+    [SerializeField] private GameObject time;
+
     private bool isTrapActive;
     private bool isCompleted;
     private bool isBossBookRainActive;
 
     private Coroutine trapCoroutine;
     private Coroutine bossBookRainCoroutine;
+    private Coroutine timerUICoroutine;
 
     private readonly List<FallingBook> activeBooks = new();
 
     // ========================================
     // Carpet Trap
     // ========================================
+
+    private IEnumerator UpdateTimerUI()
+    {
+        float startTime = Time.time;
+
+        if (timerSlider != null)
+        {
+            timerSlider.minValue = 0f;
+            timerSlider.maxValue = trapDuration;
+            timerSlider.value = trapDuration;
+        }
+
+        while (true)
+        {
+            float elapsedTime = Time.time - startTime;
+            float remainingTime = Mathf.Max(0f, trapDuration - elapsedTime);
+
+            // Slider 갱신
+            if (timerSlider != null)
+                timerSlider.value = remainingTime;
+
+            // Text 갱신
+            if (timerText != null)
+                timerText.text = $"남은 시간 {Mathf.CeilToInt(remainingTime)}초";
+
+            if (remainingTime <= 0f)
+                break;
+
+            yield return null;
+        }
+
+        timerUICoroutine = null;
+    }
+
+    private void StopTimerUI()
+    {
+        if (timerUICoroutine != null)
+        {
+            StopCoroutine(timerUICoroutine);
+            timerUICoroutine = null;
+        }
+
+        time.SetActive(false);
+    }
 
     public void ActivateTrap()
     {
@@ -70,6 +122,7 @@ public class BookTrapManager : MonoBehaviour
             carpetBoundary.SetActive(true);
 
         trapCoroutine = StartCoroutine(TrapRoutine());
+        timerUICoroutine = StartCoroutine(UpdateTimerUI());
     }
 
     private IEnumerator TrapRoutine()
@@ -111,7 +164,12 @@ public class BookTrapManager : MonoBehaviour
         ReleaseAllBooks();
 
         if (rewardBookPrefab != null)
+        {
             rewardBookPrefab.SetActive(true);
+            trigger.SetActive(true);
+        }
+
+        StopTimerUI();
 
         Debug.Log("책장 함정 완료!");
     }
@@ -130,6 +188,8 @@ public class BookTrapManager : MonoBehaviour
             carpetBoundary.SetActive(false);
 
         ReleaseAllBooks();
+
+        StopTimerUI();
     }
 
     // ========================================

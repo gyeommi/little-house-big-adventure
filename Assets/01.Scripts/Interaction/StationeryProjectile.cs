@@ -1,84 +1,135 @@
-
-using DG.Tweening;
 using UnityEngine;
 
 public class StationeryProjectile : MonoBehaviour
 {
-    [Header("Platform")]
-    [SerializeField] private Collider platformCollider;
-
     [Header("Flight")]
-    [SerializeField] private float flyDuration = 0.5f;
+    [SerializeField] private float speed = 25f;
+    [SerializeField] private float maxDistance = 50f;
 
-    [Header("Scale")]
-    [SerializeField]
-    private Vector3 targetScale =
-        new Vector3(12f, 10f, 12f);
+    [Header("Damage")]
+    [SerializeField] private int damage = 10;
 
-    [SerializeField] private Ease scaleEase = Ease.OutQuad;
+    [Header("Collision Layers")]
+    [SerializeField] private LayerMask wallLayerMask;
+    [SerializeField] private LayerMask bossLayerMask;
 
-    private bool isLaunched;
-    private Tween launchTween;
+    private StationeryPool stationeryPool;
+    private Rigidbody rb;
+
+    private Vector3 direction;
+    private float traveledDistance;
+    private bool isFlying;
 
     private void Awake()
     {
-        if (platformCollider != null)
+        rb = GetComponent<Rigidbody>();
+
+        if (rb == null)
         {
-            platformCollider.enabled = false;
+            Debug.LogError(
+                "StationeryProjectile에 Rigidbody가 없습니다.",
+                this
+            );
+
+            enabled = false;
+            return;
         }
     }
 
-    public void Launch(
-        Vector3 targetPosition,
-        Quaternion targetRotation)
+    public void SetPool(StationeryPool stationeryPool)
     {
-        if (isLaunched)
-            return;
-
-        isLaunched = true;
-
-        launchTween?.Kill();
-
-        Sequence sequence = DOTween.Sequence();
-
-        // 조준 방향으로 직선 이동
-        sequence.Join(
-            transform.DOMove(
-                targetPosition,
-                flyDuration
-            ).SetEase(Ease.Linear)
-        );
-
-        // 비행 중 부드럽게 커짐
-        sequence.Join(
-            transform.DOScale(
-                targetScale,
-                flyDuration
-            ).SetEase(scaleEase)
-        );
-
-        // 목표 방향으로 회전
-        sequence.Join(
-            transform.DORotateQuaternion(
-                targetRotation,
-                flyDuration
-            )
-        );
-
-        // 도착 후 발판으로 활성화
-        sequence.OnComplete(() =>
-        {
-            if (platformCollider != null)
-            {
-                platformCollider.enabled = true;
-            }
-        });
-
-        launchTween = sequence;
+        this.stationeryPool = stationeryPool;
     }
 
-    private void OnDestroy()
+    public void Launch(Vector3 launchDirection)
     {
-        launchTween?.Kill();
+        if (launchDirection.sqrMagnitude < 0.0001f)
+        {
+            Debug.LogWarning("발사 방향이 올바르지 않습니다.", this);
+            return;
+        }
+
+        direction = launchDirection.normalized;
+        traveledDistance = 0f;
+        isFlying = true;
+
+        rb.position = transform.position;
+        rb.rotation =
+            Quaternion.LookRotation(direction, Vector3.up);
+
+        // 키네마틱 Rigidbody이므로 linearVelocity를 설정하지 않음
+        rb.detectCollisions = true;
+
+        Debug.Log(
+            $"필기도구 발사! 방향: {direction}, " +
+            $"Wall Mask: {wallLayerMask.value}, " +
+            $"Boss Mask: {bossLayerMask.value}",
+            this
+        );
+    }
+
+    private void FixedUpdate()
+    {
+        if (!isFlying)
+            return;
+
+        rb.linearVelocity = direction * speed;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        Debug.Log($"충돌 발생: {collision.gameObject.name}", this);
+
+        // 벽에 충돌하면 즉시 정지
+        if (((1 << collision.gameObject.layer) & wallLayerMask.value) != 0)
+        {
+            isFlying = false;
+
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+
+            // 벽 충돌 이후 추가 이동 방지
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+
+            Debug.Log("벽 충돌! 필기도구 정지");
+            return;
+        }
+
+        // 보스 충돌 처리
+        if (((1 << collision.gameObject.layer) & bossLayerMask.value) != 0)
+        {
+            BaseCharacterHealth bossHealth = collision.collider.GetComponentInParent<BaseCharacterHealth>();
+
+            if (bossHealth != null)
+            {
+                bossHealth.TakeDamage(damage);
+            }
+
+            ReturnToPool();
+        }
+    }
+
+    private void ReturnToPool()
+    {
+        if (!isFlying)
+            return;
+
+        Debug.Log("ReturnToPool() 호출!");
+
+        isFlying = false;
+
+        if (stationeryPool != null)
+        {
+            stationeryPool.Return(this);
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
+    }
+
+    private void OnDisable()
+    {
+        isFlying = false;
     }
 }

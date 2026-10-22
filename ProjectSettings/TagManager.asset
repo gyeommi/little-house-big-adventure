@@ -7,6 +7,7 @@ TagManager:
   - BookshelfDoor
   - ThrowableBook
   - FxTemporaire
+  - Bullet
   layers:
   - Default
   - TransparentFX
@@ -22,7 +23,7 @@ TagManager:
   - BossZone
   - Wall
   - Floor
-  - 
+  - Furniture
   - 
   - 
   - 

@@ -5,6 +5,7 @@ using UnityEngine;
 public class CarpetZone : MonoBehaviour
 {
     [SerializeField] private BookTrapManager bookTrapManager;
+    [SerializeField] private GameObject time;
 
     private CinemachineImpulseSource impulseSource;
     private bool activated;
@@ -25,6 +26,8 @@ public class CarpetZone : MonoBehaviour
         activated = true;
 
         impulseSource.GenerateImpulse();
+
+        time.SetActive(true);
 
         ActivateTrapAfterDelay().Forget();
     }
