@@ -20,12 +20,14 @@ public class BossStunState : BaseState
 
     public override void Enter()
     {
-        stunEndTime = Time.time + stunDuration;
-
+        // 진행 중인 공격을 중단
         if (firstBoss != null)
         {
+            firstBoss.InterruptAttackForStun();
             firstBoss.PlayStunAnimation();
         }
+
+        stunEndTime = Time.time + stunDuration;
 
         Debug.Log("Boss Stun");
     }
@@ -46,11 +48,7 @@ public class BossStunState : BaseState
         );
     }
 
-    public override void FixedUpdate()
-    {
-    }
+    public override void FixedUpdate() { }
 
-    public override void Exit()
-    {
-    }
+    public override void Exit() { }
 }

@@ -168,10 +168,10 @@ public class FirstBossController : BossController
 
     private IEnumerator ChargeRoutine()
     {
-        // 돌진하기 전 보스의 원래 위치 저장
+        // 공격 시작 시 원래 위치 저장
         Vector3 originalPosition = transform.position;
 
-        // 플레이어 방향으로 돌진
+        // 1. 플레이어 방향으로 돌진
         Vector3 direction = GetFlatDirectionToPlayer();
 
         if (direction.sqrMagnitude < 0.001f)
@@ -179,14 +179,12 @@ public class FirstBossController : BossController
 
         FaceDirection(direction);
 
-        if (bossAnimator != null)
-            bossAnimator.PlayCharge();
+        bossAnimator?.PlayCharge();
 
         float elapsed = 0f;
         float movedDistance = 0f;
         bool hasHitPlayer = false;
 
-        // 1. Charge
         while (elapsed < chargeDuration &&
                movedDistance < chargeDistance)
         {
@@ -210,19 +208,18 @@ public class FirstBossController : BossController
             yield return null;
         }
 
-        // 2. Charge 종료 후 3초 대기
+        // 2. 돌진 종료 후 현재 위치에서 대기
         yield return new WaitForSeconds(chargeSweepDelay);
 
-        // 3. Sweep은 거리와 관계없이 무조건 실행
+        // 3. 현재 위치에서 플레이어를 바라보고 Sweep 실행
         Vector3 sweepDirection = GetFlatDirectionToPlayer();
 
         if (sweepDirection.sqrMagnitude > 0.001f)
             FaceDirection(sweepDirection);
 
-        if (bossAnimator != null)
-            bossAnimator.PlaySweep();
+        bossAnimator?.PlaySweep();
 
-        // 팔을 휘두르기 전 준비 시간
+        // Sweep 준비 시간
         yield return new WaitForSeconds(sweepDelay);
 
         // Sweep 공격 판정
@@ -231,10 +228,10 @@ public class FirstBossController : BossController
             DealDamageToPlayer(sweepDamage);
         }
 
-        // 공격 후딜레이
+        // 4. Sweep 공격 후딜레이
         yield return new WaitForSeconds(sweepRecoveryTime);
 
-        // 4. Sweep 종료 후 원래 위치로 복귀
+        // 5. 모든 공격이 끝난 뒤 원래 위치로 복귀
         Vector3 returnStartPosition = transform.position;
         float returnElapsed = 0f;
 
@@ -242,9 +239,9 @@ public class FirstBossController : BossController
         {
             returnElapsed += Time.deltaTime;
 
-            float t = returnDuration > 0f
-                ? Mathf.Clamp01(returnElapsed / returnDuration)
-                : 1f;
+            float t = Mathf.Clamp01(
+                returnElapsed / returnDuration
+            );
 
             transform.position = Vector3.Lerp(
                 returnStartPosition,
@@ -255,10 +252,10 @@ public class FirstBossController : BossController
             yield return null;
         }
 
-        // 위치 오차 없이 원래 위치에 정확히 복귀
+        // 원래 위치에 정확하게 배치
         transform.position = originalPosition;
 
-        // 전체 공격 시퀀스 종료 및 쿨다운 시작
+        // 전체 공격 종료 및 쿨다운 시작
         NotifyAttackFinished();
     }
 
@@ -387,7 +384,6 @@ public class FirstBossController : BossController
         Debug.Log($"보스 공격 적중! 피해량: {damage}");
     }
 
-
     /// <summary>
     /// 책 폭격 애니메이션
     /// </summary>
@@ -414,5 +410,89 @@ public class FirstBossController : BossController
         if (bossAnimator != null)
             bossAnimator.PlayDead();
     }
+
+
+    /// <summary>
+    /// 스턴 진입 시 진행 중인 공격을 중단한다.
+    /// </summary>
+    public void InterruptAttackForStun()
+    {
+        // 돌진 또는 Sweep 코루틴 중단
+        if (attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+            attackCoroutine = null;
+        }
+
+        // 공격 상태 초기화
+        isAttacking = false;
+
+        // 책 폭격 애니메이션도 종료
+        bossAnimator?.PlayBookRain(false);
+
+        Debug.Log("보스 공격 중단: 스턴 진입");
+    }
+
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        // Charge 공격 판정 범위
+        Gizmos.color = Color.red;
+
+        Vector3 chargeCenter = transform.position;
+        chargeCenter.y = transform.position.y + 0.1f;
+
+        Gizmos.DrawWireSphere(chargeCenter, chargeHitRadius);
+
+        // Sweep 공격 범위
+        Vector3 origin = sweepOrigin != null
+            ? sweepOrigin.position
+            : transform.position;
+
+        origin.y = transform.position.y + 0.1f;
+
+        Gizmos.color = Color.yellow;
+
+        // 공격 사거리
+        Gizmos.DrawWireSphere(origin, sweepRadius);
+
+        // 공격 각도 경계선
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+        forward.Normalize();
+
+        Vector3 leftDirection =
+            Quaternion.Euler(0f, -sweepAngle * 0.5f, 0f)
+            * forward;
+
+        Vector3 rightDirection =
+            Quaternion.Euler(0f, sweepAngle * 0.5f, 0f)
+            * forward;
+
+        Gizmos.DrawRay(origin, leftDirection * sweepRadius);
+        Gizmos.DrawRay(origin, rightDirection * sweepRadius);
+
+        // 각도 범위의 호 표시
+        int segments = 30;
+
+        Vector3 previousPoint = origin + leftDirection * sweepRadius;
+
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = -sweepAngle * 0.5f
+                + sweepAngle * i / segments;
+
+            Vector3 direction =
+                Quaternion.Euler(0f, angle, 0f) * forward;
+
+            Vector3 nextPoint = origin + direction * sweepRadius;
+
+            Gizmos.DrawLine(previousPoint, nextPoint);
+
+            previousPoint = nextPoint;
+        }
+    }
+#endif
 
 }

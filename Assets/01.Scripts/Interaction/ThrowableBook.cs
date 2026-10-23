@@ -10,7 +10,6 @@ public class ThrowableBook : MonoBehaviour, IInteractable
 
     [Header("Collision")]
     [SerializeField] private int enemyDamage = 15;
-    [SerializeField] private LayerMask enemyLayer;
 
     private bool isBossReward;
     private bool hasInteracted;
@@ -37,7 +36,6 @@ public class ThrowableBook : MonoBehaviour, IInteractable
         hasHitTarget = false;
     }
 
-    // PlayerInteraction에서 호출
     public void Interact()
     {
         if (IsHeld)
@@ -93,7 +91,6 @@ public class ThrowableBook : MonoBehaviour, IInteractable
 
     private void OnCollisionEnter(Collision collision)
     {
-        // 직접 던진 책만 충돌 효과 발생
         if (!isThrown || hasHitTarget)
             return;
 
@@ -105,26 +102,53 @@ public class ThrowableBook : MonoBehaviour, IInteractable
             return;
         }
 
-        // Enemy Layer와 충돌
-        int enemyLayerIndex = collision.gameObject.layer;
+        // Enemy 태그가 붙은 오브젝트 또는 부모를 확인
+        if (!HasEnemyTagInParents(collision.collider.transform))
+            return;
 
-        if ((enemyLayer.value & (1 << enemyLayerIndex)) != 0)
+        // 충돌한 콜라이더부터 부모까지 체력 컴포넌트 탐색
+        BaseCharacterHealth enemyHealth =
+            collision.collider.GetComponentInParent<BaseCharacterHealth>();
+
+        if (enemyHealth == null)
         {
-            hasHitTarget = true;
-
-            EnemyHealth enemy = collision.gameObject.GetComponent<EnemyHealth>();
-
-            if (enemy != null)
-            {
-                enemy.TakeDamage(enemyDamage);
-            }
+            Debug.LogWarning(
+                $"Enemy 태그는 있지만 BaseCharacterHealth를 찾지 못했습니다: " +
+                $"{collision.collider.name}",
+                collision.collider
+            );
+            return;
         }
+
+        hasHitTarget = true;
+
+        Debug.Log(
+            $"책 충돌! 대상: {enemyHealth.gameObject.name}, " +
+            $"데미지: {enemyDamage}",
+            this
+        );
+
+        enemyHealth.TakeDamage(enemyDamage);
+
+        gameObject.SetActive(false);
+    }
+
+    private bool HasEnemyTagInParents(Transform target)
+    {
+        while (target != null)
+        {
+            if (target.CompareTag("Enemy"))
+                return true;
+
+            target = target.parent;
+        }
+
+        return false;
     }
 
     private void OpenBookshelf(GameObject bookshelfDoor)
     {
         bookshelfDoor.SetActive(false);
-
         Debug.Log("책장 문이 열렸습니다!");
     }
 
@@ -157,7 +181,6 @@ public class ThrowableBook : MonoBehaviour, IInteractable
         }
     }
 
-    // 보스 보상 책으로 설정
     public void SetBossReward()
     {
         isBossReward = true;

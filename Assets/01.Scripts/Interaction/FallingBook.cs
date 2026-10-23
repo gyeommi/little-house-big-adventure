@@ -10,11 +10,11 @@ public class FallingBook : MonoBehaviour, IPoolable
     [SerializeField] private float maxFallSpeed = 35f;
 
     private BookTrapManager bookTrapManager;
-    private int damage;
 
     private Rigidbody rb;
     private bool hasHitPlayer;
     private bool isReturning;
+    private int damage;
 
     private void Awake()
     {

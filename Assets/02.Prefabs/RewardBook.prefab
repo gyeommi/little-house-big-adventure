@@ -140,7 +140,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &1034523759260157178
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -155,6 +155,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ThrowableBook
   expireTime: 10
   enemyDamage: 15
-  enemyLayer:
+  enemyLayerMask:
     serializedVersion: 2
     m_Bits: 256

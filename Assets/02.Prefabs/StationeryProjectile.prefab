@@ -229,7 +229,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aac611e7a8b34d04ca71af47e930a4fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StationeryProjectile
-  speed: 25
+  speed: 50
   maxDistance: 200
   damage: 25
   wallLayerMask:

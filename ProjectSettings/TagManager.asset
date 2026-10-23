@@ -7,7 +7,7 @@ TagManager:
   - BookshelfDoor
   - ThrowableBook
   - FxTemporaire
-  - Bullet
+  - Enemy
   layers:
   - Default
   - TransparentFX

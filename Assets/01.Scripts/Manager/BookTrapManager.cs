@@ -222,8 +222,7 @@ public class BookTrapManager : MonoBehaviour
 
         isBossBookRainActive = true;
 
-        bossBookRainCoroutine =
-            StartCoroutine(BossBookRainRoutine());
+        bossBookRainCoroutine = StartCoroutine(BossBookRainRoutine());
 
         return true;
     }
@@ -379,8 +378,7 @@ public class BookTrapManager : MonoBehaviour
         }
 
         // 보스 책 폭격에 맞은 경우
-        PlayerHealth playerHealth =
-            FindFirstObjectByType<PlayerHealth>();
+        PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
 
         if (playerHealth != null)
         {
