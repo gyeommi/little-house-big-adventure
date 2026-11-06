@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,15 +10,10 @@ public class SoundManager : Singleton<SoundManager>
 
     [Header("BGM Clips")]
     [SerializeField] private AudioClip titleBgm;
-    [SerializeField] private AudioClip businessBgm; // 경영 씬 브금
-    [SerializeField] private AudioClip combatBgm;     // 전투 씬 브금
-    [SerializeField] private AudioClip gachaBgm;     // 가챠 씬 브금
-    //[SerializeField] private AudioClip bossBgm;       // 보스 씬 브금
+    [SerializeField] private AudioClip gameBgm;
 
-    [Header("Enemy Attack SFX")]
-    [SerializeField, Range(0f, 1f)] private float enemyAttackVolume = 0.65f;
-    [SerializeField, Min(0f)] private float enemyAttackMinInterval = 0.1f;
-    private float nextEnemyAttackTime;
+    [Header("UI SFX")]
+    [SerializeField] private AudioClip uiSelectSfx;
 
     private const string BGM_KEY = "BGMVolume";
     private const string SFX_KEY = "SFXVolume";
@@ -31,7 +27,15 @@ public class SoundManager : Singleton<SoundManager>
         isDontDestroy = true;
         DontDestroyOnLoad(gameObject);
 
-        // Ensure SFX playback when the combat scene is launched directly.
+        // AudioSource 초기화
+        if (bgmAudioSource == null)
+        {
+            bgmAudioSource = gameObject.AddComponent<AudioSource>();
+            bgmAudioSource.playOnAwake = false;
+            bgmAudioSource.loop = true;
+            bgmAudioSource.spatialBlend = 0f;
+        }
+
         if (sfxAudioSource == null)
         {
             sfxAudioSource = gameObject.AddComponent<AudioSource>();
@@ -39,6 +43,7 @@ public class SoundManager : Singleton<SoundManager>
             sfxAudioSource.spatialBlend = 0f;
         }
 
+        // 저장된 볼륨 불러오기
         float savedBgm = PlayerPrefs.GetFloat(BGM_KEY, 0.5f);
         float savedSfx = PlayerPrefs.GetFloat(SFX_KEY, 0.5f);
 
@@ -58,64 +63,59 @@ public class SoundManager : Singleton<SoundManager>
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // 씬 이름이 확정되면 아래 주석을 풀고 실제 씬 이름으로 변경
         switch (scene.name)
         {
-            case "TitleScene": // 메인 메뉴
+            case "TitleScene":
                 PlayBGM(titleBgm);
                 break;
 
-
-            case "BusinessScene": // 경영 씬 이름
-                PlayBGM(businessBgm);
-                break;
-
-            case "CombatScene": // 전투 씬 이름
-                PlayBGM(combatBgm);
-                break;
-
-            case "GachaScene": // 가챠 씬 이름
-                PlayBGM(gachaBgm);
-                break;
-
-            //case "BossScene": // 보스 씬 이름
-            //    PlayBGM(bossBgm);
-            //    break;
-
-
-            default:
+            case "Stage1":
+            case "Stage2":
+                PlayBGM(gameBgm);
                 break;
         }
     }
 
+    // BGM 볼륨 설정
     public void SetBGMVolume(float volume)
     {
         if (bgmAudioSource != null)
-        {
             bgmAudioSource.volume = volume;
-        }
 
         PlayerPrefs.SetFloat(BGM_KEY, volume);
+        PlayerPrefs.Save();
     }
 
+    // SFX 볼륨 설정
     public void SetSFXVolume(float volume)
     {
         if (sfxAudioSource != null)
-        {
             sfxAudioSource.volume = volume;
-        }
 
         PlayerPrefs.SetFloat(SFX_KEY, volume);
+        PlayerPrefs.Save();
     }
 
-    public float GetBGMVolume() => bgmAudioSource != null ? bgmAudioSource.volume : 0.5f;
-    public float GetSFXVolume() => sfxAudioSource != null ? sfxAudioSource.volume : 0.5f;
+    public float GetBGMVolume()
+    {
+        return bgmAudioSource != null
+            ? bgmAudioSource.volume : 0.5f;
+    }
 
+    public float GetSFXVolume()
+    {
+        return sfxAudioSource != null
+            ? sfxAudioSource.volume : 0.5f;
+    }
+
+    // BGM 재생
     public void PlayBGM(AudioClip clip)
     {
-        if (clip == null) return;
+        if (clip == null || bgmAudioSource == null)
+            return;
 
-        if (bgmAudioSource.isPlaying && bgmAudioSource.clip == clip)
+        if (bgmAudioSource.isPlaying &&
+            bgmAudioSource.clip == clip)
             return;
 
         bgmAudioSource.clip = clip;
@@ -123,23 +123,12 @@ public class SoundManager : Singleton<SoundManager>
         bgmAudioSource.Play();
     }
 
-    // Shared limit keeps simultaneous enemy hits from stacking too loudly.
-    public void PlayEnemyAttackSFX(AudioClip clip)
+    // UI 선택 효과음 재생
+    public void PlayUISelectSFX()
     {
-        if (clip == null || sfxAudioSource == null || Time.unscaledTime < nextEnemyAttackTime)
+        if (uiSelectSfx == null || sfxAudioSource == null)
             return;
 
-        nextEnemyAttackTime = Time.unscaledTime + enemyAttackMinInterval;
-        sfxAudioSource.PlayOneShot(clip, enemyAttackVolume);
-    }
-
-    public void PlaySFX(AudioClip clip)
-    {
-        if (clip == null) return;
-
-        if (sfxAudioSource != null)
-        {
-            sfxAudioSource.PlayOneShot(clip);
-        }
+        sfxAudioSource.PlayOneShot(uiSelectSfx);
     }
 }
