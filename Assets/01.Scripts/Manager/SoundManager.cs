@@ -44,8 +44,8 @@ public class SoundManager : Singleton<SoundManager>
         }
 
         // 저장된 볼륨 불러오기
-        float savedBgm = PlayerPrefs.GetFloat(BGM_KEY, 0.5f);
-        float savedSfx = PlayerPrefs.GetFloat(SFX_KEY, 0.5f);
+        float savedBgm = PlayerPrefs.GetFloat(BGM_KEY, 1f);
+        float savedSfx = PlayerPrefs.GetFloat(SFX_KEY, 1f);
 
         SetBGMVolume(savedBgm);
         SetSFXVolume(savedSfx);
@@ -99,13 +99,13 @@ public class SoundManager : Singleton<SoundManager>
     public float GetBGMVolume()
     {
         return bgmAudioSource != null
-            ? bgmAudioSource.volume : 0.5f;
+            ? bgmAudioSource.volume : 1f;
     }
 
     public float GetSFXVolume()
     {
         return sfxAudioSource != null
-            ? sfxAudioSource.volume : 0.5f;
+            ? sfxAudioSource.volume : 1f;
     }
 
     // BGM 재생

@@ -16,7 +16,6 @@ public class UISettingsPopup : MonoBehaviour
     [SerializeField] private Slider sfxSlider;
 
     [Header("Convenience Settings")]
-    private TMP_Dropdown frameRateDropdown;
     [SerializeField] private TMP_Dropdown resolutionDropdown;
     [SerializeField] private Toggle fullscreenToggle;
 
@@ -24,12 +23,6 @@ public class UISettingsPopup : MonoBehaviour
     [SerializeField] private GameObject returnToMenuButton;
 
     private List<Resolution> resolutions = new List<Resolution>();
-
-    public static bool IsShowEnemyDamage =>
-        PlayerPrefs.GetInt("ShowEnemyDamage", 1) == 1;
-
-    public static bool IsShowPlayerDamage =>
-        PlayerPrefs.GetInt("ShowPlayerDamage", 1) == 1;
 
     private void Start()
     {
@@ -116,21 +109,6 @@ public class UISettingsPopup : MonoBehaviour
 
     private void InitConvenienceSettings()
     {
-        // 프레임 제한 초기화
-        QualitySettings.vSyncCount = 0;
-
-        if (frameRateDropdown != null)
-        {
-            frameRateDropdown.onValueChanged.RemoveAllListeners();
-
-            int savedFrameIndex = PlayerPrefs.GetInt("FrameRateIndex", 1);
-
-            SetFrameRate(savedFrameIndex);
-            frameRateDropdown.value = savedFrameIndex;
-
-            frameRateDropdown.onValueChanged.AddListener(OnFrameRateChanged);
-        }
-
         // 해상도 설정
         if (resolutionDropdown != null)
         {
@@ -208,25 +186,6 @@ public class UISettingsPopup : MonoBehaviour
             fullscreenToggle.isOn = isFull;
 
             fullscreenToggle.onValueChanged.AddListener(OnFullscreenChanged);
-        }
-    }
-
-    public void OnFrameRateChanged(int index)
-    {
-        SetFrameRate(index);
-
-        PlayerPrefs.SetInt("FrameRateIndex", index);
-        PlayerPrefs.Save();
-    }
-
-    private void SetFrameRate(int index)
-    {
-        switch (index)
-        {
-            case 0: Application.targetFrameRate = 30; break;
-            case 1: Application.targetFrameRate = 60; break;
-            case 2: Application.targetFrameRate = 120; break;
-            case 3: Application.targetFrameRate = -1; break;
         }
     }
 
