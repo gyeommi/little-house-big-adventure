@@ -27,6 +27,12 @@ public class PlayerController : BaseCharacterController
     public event Action OnThrowInput;
     public event Action OnButtSlamInput;
 
+    private bool canButtSlam;
+
+    private bool isRotationLocked;
+    public bool IsRotationLocked => isRotationLocked;
+    protected override bool CanRotate => !isRotationLocked;
+
     protected override void Awake()
     {
         base.Awake();
@@ -65,6 +71,14 @@ public class PlayerController : BaseCharacterController
         Vector3 direction = forward * moveInput.y + right * moveInput.x;
 
         return Vector3.ClampMagnitude(direction, 1f);
+    }
+
+    /// <summary>
+    /// 플레이어 회전을 고정한다.
+    /// </summary>
+    public void SetRotationLocked(bool locked)
+    {
+        isRotationLocked = locked;
     }
 
     /// <summary>
@@ -135,13 +149,18 @@ public class PlayerController : BaseCharacterController
         OnThrowInput?.Invoke();
     }
 
+    public void SetButtSlamEnabled(bool enabled)
+    {
+        canButtSlam = enabled;
+    }
+
     /// <summary>
     /// 엉덩방아 입력을 받는다.
     /// Ctrl 입력 시 구독 중인 발사 구역에 입력을 전달한다.
     /// </summary>
     public void OnButtSlam(InputAction.CallbackContext context)
     {
-        if (!context.performed)
+        if (!context.performed || !canButtSlam)
             return;
 
         Debug.Log("엉덩방아 입력!");

@@ -24,8 +24,8 @@ public class FirstBossController : BossController
 
     [Header("Charge Attack")]
     [SerializeField] private float chargeSpeed = 10f;
-    [SerializeField] private float chargeDistance = 6f;
-    [SerializeField] private float chargeDuration = 0.7f;
+    [SerializeField] private float chargeStopDistance = 1.5f;
+    [SerializeField] private float chargeDuration = 2f;
     [SerializeField] private float chargeHitRadius = 0.8f;
     [SerializeField] private int chargeDamage = 1;
     [SerializeField] private float chargeSweepDelay = 3f;
@@ -171,7 +171,7 @@ public class FirstBossController : BossController
         // 공격 시작 시 원래 위치 저장
         Vector3 originalPosition = transform.position;
 
-        // 1. 플레이어 방향으로 돌진
+        // 플레이어 방향 계산
         Vector3 direction = GetFlatDirectionToPlayer();
 
         if (direction.sqrMagnitude < 0.001f)
@@ -181,21 +181,35 @@ public class FirstBossController : BossController
 
         bossAnimator?.PlayCharge();
 
+        // 플레이어 앞까지 돌진
         float elapsed = 0f;
-        float movedDistance = 0f;
         bool hasHitPlayer = false;
 
-        while (elapsed < chargeDuration &&
-               movedDistance < chargeDistance)
+        while (elapsed < chargeDuration)
         {
-            float step = Mathf.Min(
-                chargeSpeed * Time.deltaTime,
-                chargeDistance - movedDistance
+            if (player == null)
+                break;
+
+            Vector3 targetPosition = player.position
+                - direction * chargeStopDistance;
+
+            // 높이는 현재 보스 위치 유지
+            targetPosition.y = transform.position.y;
+
+            Vector3 toTarget = targetPosition - transform.position;
+
+            // 목표 위치에 도달하면 종료
+            if (toTarget.magnitude <= 0.05f)
+                break;
+
+            float step = chargeSpeed * Time.deltaTime;
+
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                targetPosition,
+                step
             );
 
-            transform.position += direction * step;
-
-            movedDistance += step;
             elapsed += Time.deltaTime;
 
             // 돌진 중 플레이어에게 한 번만 피해
@@ -208,10 +222,10 @@ public class FirstBossController : BossController
             yield return null;
         }
 
-        // 2. 돌진 종료 후 현재 위치에서 대기
+        // 돌진 종료 후 대기
         yield return new WaitForSeconds(chargeSweepDelay);
 
-        // 3. 현재 위치에서 플레이어를 바라보고 Sweep 실행
+        // 현재 위치에서 플레이어 바라보기
         Vector3 sweepDirection = GetFlatDirectionToPlayer();
 
         if (sweepDirection.sqrMagnitude > 0.001f)
@@ -219,7 +233,6 @@ public class FirstBossController : BossController
 
         bossAnimator?.PlaySweep();
 
-        // Sweep 준비 시간
         yield return new WaitForSeconds(sweepDelay);
 
         // Sweep 공격 판정
@@ -228,10 +241,9 @@ public class FirstBossController : BossController
             DealDamageToPlayer(sweepDamage);
         }
 
-        // 4. Sweep 공격 후딜레이
         yield return new WaitForSeconds(sweepRecoveryTime);
 
-        // 5. 모든 공격이 끝난 뒤 원래 위치로 복귀
+        // 원래 위치로 복귀
         Vector3 returnStartPosition = transform.position;
         float returnElapsed = 0f;
 
@@ -252,10 +264,8 @@ public class FirstBossController : BossController
             yield return null;
         }
 
-        // 원래 위치에 정확하게 배치
         transform.position = originalPosition;
 
-        // 전체 공격 종료 및 쿨다운 시작
         NotifyAttackFinished();
     }
 

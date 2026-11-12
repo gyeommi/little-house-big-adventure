@@ -28,6 +28,7 @@ public class StationeryLaunchZone : MonoBehaviour
         UnsubscribePlayerInput();
 
         playerController = controller;
+        playerController.SetButtSlamEnabled(true);
         playerController.OnButtSlamInput += TryLaunchStationery;
     }
 
@@ -38,6 +39,8 @@ public class StationeryLaunchZone : MonoBehaviour
 
         if (controller == null || controller != playerController)
             return;
+
+        playerController.SetButtSlamEnabled(false);
 
         UnsubscribePlayerInput();
     }

@@ -10,6 +10,9 @@ public class BookTrapManager : MonoBehaviour
     [SerializeField] private float trapDuration = 60f;
     [SerializeField] private BoxCollider fallingAreaCollider;
     [SerializeField] private GameObject carpetBoundary;
+    [SerializeField] private GameObject completionEffect;
+    [SerializeField] private Renderer[] targetRenderer;
+    [SerializeField] private Material completionMaterial;
 
     [Header("Boss Book Rain")]
     [SerializeField] private BoxCollider bossFallingAreaCollider;
@@ -168,6 +171,15 @@ public class BookTrapManager : MonoBehaviour
             rewardBookPrefab.SetActive(true);
             trigger.SetActive(true);
         }
+
+        // 완료 Effect 활성화
+        if (completionEffect != null)
+            completionEffect.SetActive(true);
+
+        // Material 변경
+        if (targetRenderer != null && completionMaterial != null)
+            for (int i = 0; i < targetRenderer.Length; i++)
+                targetRenderer[i].material = completionMaterial;
 
         StopTimerUI();
 
