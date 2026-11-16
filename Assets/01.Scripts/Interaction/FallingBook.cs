@@ -6,8 +6,8 @@ public class FallingBook : MonoBehaviour, IPoolable
     [SerializeField] private LayerMask carpetLayer;
 
     [Header("Fall Settings")]
-    [SerializeField] private float gravityScale = 4f;
-    [SerializeField] private float maxFallSpeed = 35f;
+    [SerializeField] private float gravityScale = 6f;
+    [SerializeField] private float maxFallSpeed = 50f;
 
     private BookTrapManager bookTrapManager;
 

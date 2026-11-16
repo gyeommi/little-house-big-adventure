@@ -155,6 +155,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FallingBook
   carpetLayer:
     serializedVersion: 2
-    m_Bits: 11264
-  gravityScale: 4
-  maxFallSpeed: 35
+    m_Bits: 27648
+  gravityScale: 6
+  maxFallSpeed: 55

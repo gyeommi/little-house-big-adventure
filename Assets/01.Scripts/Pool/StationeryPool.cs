@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using UnityEngine;
 
 public class StationeryPool : MonoBehaviour
@@ -8,6 +9,9 @@ public class StationeryPool : MonoBehaviour
     [SerializeField] private int poolSize = 10;
 
     private Pool pool;
+
+    // 현재 활성화된 투사체 관리
+    private List<StationeryProjectile> activeProjectiles = new List<StationeryProjectile>();
 
     private void Awake()
     {
@@ -41,16 +45,46 @@ public class StationeryPool : MonoBehaviour
             );
 
         if (projectile != null)
+        {
             projectile.SetPool(this);
+
+            if (!activeProjectiles.Contains(projectile))
+                activeProjectiles.Add(projectile);
+        }
 
         return projectile;
     }
 
+    // 개별 투사체 회수
     public void Return(StationeryProjectile projectile)
     {
         if (projectile == null || pool == null)
             return;
 
+        if (!activeProjectiles.Contains(projectile))
+            return;
+
+        activeProjectiles.Remove(projectile);
+
         pool.ReturnObject(projectile.gameObject);
+    }
+
+    // 활성화된 모든 투사체 회수
+    public void ReturnAll()
+    {
+        if (pool == null)
+            return;
+
+        for (int i = activeProjectiles.Count - 1; i >= 0; i--)
+        {
+            StationeryProjectile projectile = activeProjectiles[i];
+
+            if (projectile == null)
+                continue;
+
+            pool.ReturnObject(projectile.gameObject);
+        }
+
+        activeProjectiles.Clear();
     }
 }

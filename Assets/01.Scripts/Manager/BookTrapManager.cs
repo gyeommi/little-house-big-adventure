@@ -25,22 +25,29 @@ public class BookTrapManager : MonoBehaviour
 
     [Header("Falling Warning")]
     [SerializeField] private FallingPointPool fallingPointPool;
-    [SerializeField] private float warningDuration = 0.7f;
-    [SerializeField] private float warningHeightOffset = -0.1f;
+    [SerializeField] private float warningDuration = 1.5f;
+    [SerializeField] private float warningHeightOffset = -3f;
+
+    [Header("Falling Position")]
+    [SerializeField] private float minDistance = 2f;
+    [SerializeField] private int maxTryCount = 20;
+
+    private List<Vector3> recentPositions = new List<Vector3>();
 
     [Header("Carpet Falling Interval")]
-    [SerializeField] private float normalFallingInterval = 7f;
-    [SerializeField] private float finalFallingInterval = 4f;
+    [SerializeField] private float normalFallingInterval = 3f;
+    [SerializeField] private float finalFallingInterval = 1.5f;
     [SerializeField] private float finalPhaseTime = 20f;
 
     [Header("Reward Books")]
     [SerializeField] private GameObject rewardBookPrefab;
+    [SerializeField] private GameObject rewardBookGuide;
     [SerializeField] private GameObject trigger;
 
     [Header("Boss Reward Books")]
     [SerializeField] private GameObject bossRewardBookPrefab;
     [SerializeField] private Transform player;
-    [SerializeField] private int bossRewardBookCount = 3;
+    [SerializeField] private int bossRewardBookCount = 2;
     [SerializeField] private float rewardSpawnRadius = 2f;
     [SerializeField] private float rewardSpawnHeight = 0.5f;
 
@@ -169,6 +176,7 @@ public class BookTrapManager : MonoBehaviour
         if (rewardBookPrefab != null)
         {
             rewardBookPrefab.SetActive(true);
+            rewardBookGuide.SetActive(true);
             trigger.SetActive(true);
         }
 
@@ -343,28 +351,82 @@ public class BookTrapManager : MonoBehaviour
         activeBooks.Add(book);
     }
 
+    //private Vector3 GetRandomFallingPosition(BoxCollider areaCollider)
+    //{
+    //    Vector3 center = areaCollider.center;
+    //    Vector3 halfSize = areaCollider.size * 0.5f;
+
+    //    float randomX = Random.Range(
+    //        center.x - halfSize.x,
+    //        center.x + halfSize.x
+    //    );
+
+    //    float randomZ = Random.Range(
+    //        center.z - halfSize.z,
+    //        center.z + halfSize.z
+    //    );
+
+    //    Vector3 localPosition = new Vector3(
+    //        randomX,
+    //        center.y + halfSize.y,
+    //        randomZ
+    //    );
+
+    //    return areaCollider.transform.TransformPoint(localPosition);
+    //}
+
     private Vector3 GetRandomFallingPosition(BoxCollider areaCollider)
     {
         Vector3 center = areaCollider.center;
         Vector3 halfSize = areaCollider.size * 0.5f;
 
-        float randomX = Random.Range(
-            center.x - halfSize.x,
-            center.x + halfSize.x
-        );
+        Vector3 selectedPosition = Vector3.zero;
 
-        float randomZ = Random.Range(
-            center.z - halfSize.z,
-            center.z + halfSize.z
-        );
+        for (int i = 0; i < maxTryCount; i++)
+        {
+            float randomX = Random.Range(
+                center.x - halfSize.x,
+                center.x + halfSize.x
+            );
 
-        Vector3 localPosition = new Vector3(
-            randomX,
-            center.y + halfSize.y,
-            randomZ
-        );
+            float randomZ = Random.Range(
+                center.z - halfSize.z,
+                center.z + halfSize.z
+            );
 
-        return areaCollider.transform.TransformPoint(localPosition);
+            Vector3 localPosition = new Vector3(
+                randomX,
+                center.y + halfSize.y,
+                randomZ
+            );
+
+            selectedPosition =
+                areaCollider.transform.TransformPoint(localPosition);
+
+            bool isTooClose = false;
+
+            foreach (Vector3 previousPosition in recentPositions)
+            {
+                Vector3 a = new Vector3(
+                    selectedPosition.x, 0, selectedPosition.z);
+
+                Vector3 b = new Vector3(
+                    previousPosition.x, 0, previousPosition.z);
+
+                if (Vector3.Distance(a, b) < minDistance)
+                {
+                    isTooClose = true;
+                    break;
+                }
+            }
+
+            if (!isTooClose)
+                break;
+        }
+
+        recentPositions.Add(selectedPosition);
+
+        return selectedPosition;
     }
 
     // ========================================

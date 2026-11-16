@@ -49,23 +49,19 @@ public class StationeryProjectile : MonoBehaviour
             return;
         }
 
+        // 이전 물리 상태 초기화
+        rb.constraints = RigidbodyConstraints.None;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
         direction = launchDirection.normalized;
         traveledDistance = 0f;
         isFlying = true;
 
         rb.position = transform.position;
-        rb.rotation =
-            Quaternion.LookRotation(direction, Vector3.up);
+        rb.rotation = Quaternion.LookRotation(direction, Vector3.up);
 
-        // 키네마틱 Rigidbody이므로 linearVelocity를 설정하지 않음
         rb.detectCollisions = true;
-
-        Debug.Log(
-            $"필기도구 발사! 방향: {direction}, " +
-            $"Wall Mask: {wallLayerMask.value}, " +
-            $"Boss Mask: {bossLayerMask.value}",
-            this
-        );
     }
 
     private void FixedUpdate()
