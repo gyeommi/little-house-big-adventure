@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -24,6 +25,9 @@ public abstract class BaseCharacterController : MonoBehaviour
     public float JumpPower => jumpPower;
     public float GravityVelocity => gravityVelocity;
 
+    // 자식 클래스에서 회전 가능 여부를 결정한다.
+    protected virtual bool CanRotate => true;
+
     protected virtual void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -44,7 +48,8 @@ public abstract class BaseCharacterController : MonoBehaviour
     /// </summary>
     protected virtual void Move(Vector3 direction, float speed)
     {
-        if (direction.sqrMagnitude > 0.01f)
+        // 회전이 허용된 경우에만 이동 방향을 바라본다.
+        if (CanRotate && direction.sqrMagnitude > 0.01f)
         {
             Rotate(direction);
         }

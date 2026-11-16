@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerHealth : BaseCharacterHealth
 {
@@ -6,6 +7,8 @@ public class PlayerHealth : BaseCharacterHealth
     {
         base.Die();
 
-        // 플레이어 사망 처리
+        Debug.Log("플레이어 사망! GameOverScene으로 이동합니다.");
+
+        SceneManager.LoadScene("GameOverScene", LoadSceneMode.Single);
     }
 }

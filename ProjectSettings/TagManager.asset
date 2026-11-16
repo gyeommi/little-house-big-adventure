@@ -3,7 +3,11 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - BookshelfDoor
+  - ThrowableBook
+  - FxTemporaire
+  - Enemy
   layers:
   - Default
   - TransparentFX
@@ -16,10 +20,10 @@ TagManager:
   - Enemy
   - EnemyBullet
   - Carpet
-  - 
-  - 
-  - 
-  - 
+  - BossZone
+  - Wall
+  - Floor
+  - Furniture
   - 
   - 
   - 
